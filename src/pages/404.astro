@@ -1,0 +1,28 @@
+---
+import Layout from '@/layouts/Layout.astro'
+import { Button } from '@/components/ui/button'
+---
+
+<Layout
+  title="Página no encontrada - Dominican HCI Club"
+  description="La página que buscas no existe. Vuelve a la página principal del Dominican HCI Club"
+>
+  <div class="min-h-screen bg-white flex items-center justify-center px-4">
+    <div class="text-center max-w-2xl">
+      <h1 class="text-[12rem] md:text-[16rem] font-bold mb-6 text-[#192a6e] leading-none">
+        404
+      </h1>
+      <p class="text-xl text-gray-600 mb-8">
+        ¡Hola! Parece que por aquí no hay nada. No te preocupes, llevamos de vuelta a la página principal 👇
+      </p>
+      <Button
+        asChild
+        client:load
+        className="bg-[#192a6e] hover:bg-[#192a6e]/90 text-white px-8 py-6 text-lg rounded-md"
+      >
+        <a href="/">Llévame de vuelta al inicio</a>
+      </Button>
+    </div>
+  </div>
+</Layout>
+

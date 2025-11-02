@@ -1,16 +1,38 @@
 ---
-
+import Layout from '@/layouts/Layout.astro'
+import Header from '@/components/Header'
+import HeroSection from '@/components/HeroSection'
+import AboutSection from '@/components/AboutSection'
+import MembershipSection from '@/components/MembershipSection'
+import TestimonialsSection from '@/components/TestimonialsSection'
+import CTASection from '@/components/CTASection'
+import Footer from '@/components/Footer'
 ---
 
-<html lang="en">
-	<head>
-		<meta charset="utf-8" />
-		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-		<meta name="viewport" content="width=device-width" />
-		<meta name="generator" content={Astro.generator} />
-		<title>Astro</title>
-	</head>
-	<body>
-		<h1>Astro</h1>
-	</body>
-</html>
+<Layout
+  title="Dominican HCI Club - Aprende haciendo, no solo leyendo"
+  description="Dominican HCI Club - Un espacio académico de formación práctica en investigación y diseño de experiencia de usuario. Aprende haciendo, no solo leyendo."
+>
+  <div class="min-h-screen bg-background text-[rgba(0,0,0,1)]">
+      <!-- Header -->
+      <Header client:load />
+
+      <!-- Hero Section -->
+      <HeroSection client:load />
+
+      <!-- About Section -->
+      <AboutSection client:load />
+
+      <!-- Membership Plans -->
+      <MembershipSection client:load />
+
+      <!-- Testimonials -->
+      <TestimonialsSection client:load />
+
+      <!-- CTA Section -->
+      <CTASection client:load />
+
+      <!-- Footer -->
+      <Footer client:load />
+    </div>
+</Layout>

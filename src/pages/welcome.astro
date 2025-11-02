@@ -1,0 +1,50 @@
+---
+import Layout from '@/layouts/Layout.astro'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
+---
+
+<Layout
+  title="Bienvenida - Dominican HCI Club"
+  description="Bienvenida al Dominican HCI Club"
+>
+  <div class="min-h-screen bg-background flex items-start justify-center p-4 pt-4">
+    <div class="w-full max-w-3xl">
+      <Card client:load>
+        <CardHeader client:load className="pt-4 pb-0">
+          <CardTitle client:load className="text-3xl md:text-4xl font-bold text-[#192a6e] text-left">
+            ¡Aquí es donde inicias! 🌱
+          </CardTitle>
+        </CardHeader>
+        <CardContent client:load className="space-y-4 text-lg leading-relaxed pt-4">
+          <p class="text-foreground">
+            En menos de 24 horas recibirás en tu correo la invitación para unirte a nuestro espacio de crecimiento en{" "}
+            <span class="font-semibold">Pumble</span>. Allí podrás participar en seminarios ilimitados, debates y
+            proyectos colaborativos sobre la Investigación y el Diseño de Experiencia de Usuario, fundamentados en la
+            Interacción Humano-Computadora (IHC). Destacando también tu acceso ilimitado a recursos académicos curados
+            especialmente para ti y mucho más.
+          </p>
+
+          <p class="text-foreground">
+            Todo esto porque nos emociona ser parte de este camino en el que transformas tus conocimientos en
+            práctica, en equipo, junto a más innovadores que también se están fortaleciendo desde la experiencia con
+            nuestro apoyo.
+          </p>
+
+          <p class="text-foreground">Nos vemos en breve dentro del club para tu bienvenida 🤍</p>
+
+          <div class="pt-3 border-t border-border">
+            <p class="text-foreground">Con aprecio,</p>
+            <p class="font-semibold text-foreground">Marilenny Soriano</p>
+            <p class="text-muted-foreground">Fundadora</p>
+          </div>
+        </CardContent>
+        <CardFooter client:load className="flex justify-center pt-4">
+          <Button client:load asChild className="w-full max-w-xs bg-[#192a6e] hover:bg-[#192a6e]/90 text-lg py-6">
+            <a href="/">Allí estaré 🚀 </a>
+          </Button>
+        </CardFooter>
+      </Card>
+    </div>
+  </div>
+</Layout>
