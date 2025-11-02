@@ -1,8 +1,8 @@
 ---
 import Layout from '@/layouts/Layout.astro'
-import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { CheckCircle } from 'lucide-react'
+import ButtonsConfirmCard from '@/components/ButtonsConfirmCard'
 ---
 
 <Layout
@@ -25,12 +25,7 @@ import { CheckCircle } from 'lucide-react'
           </p>
         </CardContent>
         <CardFooter client:load className="flex flex-col gap-3">
-          <Button client:load asChild className="w-full bg-[rgba(25,42,110,1)]">
-            <a href="/welcome">Explorar contenido</a>
-          </Button>
-          <Button client:load asChild variant="outline" className="w-full bg-transparent text-[rgba(25,42,110,1)]">
-            <a href="/profile">Ir a mi perfil</a>
-          </Button>
+          <ButtonsConfirmCard />
         </CardFooter>
       </Card>
     </div>

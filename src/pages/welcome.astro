@@ -2,6 +2,7 @@
 import Layout from '@/layouts/Layout.astro'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
+import ButtonWelcomeCard from '@/components/ButtonWelcomeCard'
 ---
 
 <Layout
@@ -40,9 +41,7 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/componen
           </div>
         </CardContent>
         <CardFooter client:load className="flex justify-center pt-4">
-          <Button client:load asChild className="w-full max-w-xs bg-[#192a6e] hover:bg-[#192a6e]/90 text-lg py-6">
-            <a href="/">Allí estaré 🚀 </a>
-          </Button>
+          <ButtonWelcomeCard />
         </CardFooter>
       </Card>
     </div>

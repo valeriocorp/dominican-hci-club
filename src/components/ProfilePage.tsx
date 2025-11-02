@@ -44,7 +44,7 @@ export default function ProfilePage() {
                 </div>
                 {!isEditing ? (
                   <Button
-                    variant="ghost"
+                    variant="outline"
                     size="sm"
                     onClick={() => setIsEditing(true)}
                   >
@@ -149,7 +149,7 @@ export default function ProfilePage() {
                       Actualizar tarjeta
                     </Button>
                     <Button
-                      variant="outline"
+                      style={{ backgroundColor: '#192a6e' }}
                       className="flex-1"
                       asChild
                     >

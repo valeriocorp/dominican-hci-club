@@ -29,7 +29,7 @@ export default function ProfileFreePage() {
       <main className="container mx-auto px-4 py-8 max-w-4xl">
         {/* Profile Header */}
         <div className="mb-8">
-          <h2 className="text-3xl font-bold mb-2" style={{ color: 'rgba(25,42,110,1)' }}>Mi Perfil</h2>
+          <h2 className="text-3xl font-bold mb-2" style={{ color: 'rgba(25,42,110,1)' }}>Mi perfil</h2>
           <p className="text-gray-600">Gestiona tu información personal y suscripción</p>
         </div>
 
@@ -44,7 +44,7 @@ export default function ProfileFreePage() {
                 </div>
                 {!isEditing ? (
                   <Button
-                    variant="ghost"
+                    variant="outline"
                     size="sm"
                     onClick={() => setIsEditing(true)}
                   >
