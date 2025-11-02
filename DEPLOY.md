@@ -2,12 +2,12 @@
 
 ## Configuración para Producción
 
-Este proyecto está configurado para desplegarse con Dokploy/Nixpacks.
+Este proyecto está configurado para desplegarse con Dokploy/Nixpacks usando Bun.
 
 ### Archivos de Configuración
 
+- **`nixpacks.toml`**: Configuración específica para Nixpacks con Bun
 - **`package.json`**: Contiene el comando `start` necesario para ejecutar el servidor en producción
-- **`nixpacks.toml`**: Configuración específica para Nixpacks
 - **`astro.config.mjs`**: Configurado con adaptador Node.js en modo standalone
 
 ### Variables de Entorno Requeridas
@@ -16,13 +16,13 @@ Asegúrate de configurar estas variables en tu plataforma de despliegue:
 
 ```env
 HOST=0.0.0.0
-PORT=3000
+PORT=4321
 NODE_ENV=production
 ```
 
 ### Proceso de Despliegue
 
-1. **Setup**: Instala Bun y Node.js
+1. **Setup**: Instala Bun en el contenedor
 2. **Install**: `bun install --frozen-lockfile` - Instala las dependencias
 3. **Build**: `bun run build` - Compila el proyecto
 4. **Start**: `bun run start` - Inicia el servidor de producción
