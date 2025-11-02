@@ -22,19 +22,21 @@ NODE_ENV=production
 
 ### Proceso de Despliegue
 
-1. **Build**: `bun run build` - Compila el proyecto
-2. **Start**: `bun run start` - Inicia el servidor de producción
+1. **Setup**: Instala Bun y Node.js
+2. **Install**: `bun install --frozen-lockfile` - Instala las dependencias
+3. **Build**: `bun run build` - Compila el proyecto
+4. **Start**: `bun run start` - Inicia el servidor de producción
 
 ### Puerto
 
-La aplicación escucha en el puerto **3000** por defecto. Asegúrate de que tu configuración de Dokploy esté mapeando correctamente este puerto.
+La aplicación escucha en el puerto definido por la variable de entorno `PORT` (por defecto **4321**). El comando start acepta variables de entorno para configurar el host y puerto.
 
 ### Verificación Local
 
 Para probar el build de producción localmente:
 
 ```bash
-# Instalar dependencias
+# Instalar dependencias con Bun
 bun install
 
 # Construir el proyecto
@@ -44,5 +46,5 @@ bun run build
 bun run start
 ```
 
-La aplicación estará disponible en `http://localhost:3000`
+La aplicación estará disponible en `http://localhost:4321` (o el puerto configurado)
 
