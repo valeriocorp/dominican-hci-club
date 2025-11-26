@@ -182,24 +182,53 @@ export default function ProfilePage({ user, isLoggedIn, currentPlan = 'free' }: 
                   </li>
                 </ul>
               ) : (
-                <ul className="space-y-3">
-                  <li className="flex items-start gap-3">
-                    <div className="w-1.5 h-1.5 rounded-full bg-primary mt-2" />
-                    <span>Acceso a recursos limitados</span>
-                  </li>
-                  <li className="flex items-start gap-3">
-                    <div className="w-1.5 h-1.5 rounded-full bg-primary mt-2" />
-                    <span>Asistencia a eventos limitados</span>
-                  </li>
-                  <li className="flex items-start gap-3">
-                    <div className="w-1.5 h-1.5 rounded-full bg-primary mt-2" />
-                    <span>Comunidad limitada</span>
-                  </li>
-                  <li className="flex items-start gap-3">
-                    <div className="w-1.5 h-1.5 rounded-full bg-primary mt-2" />
-                    <span>Soporte</span>
-                  </li>
-                </ul>
+                <div className="space-y-4">
+                  <ul className="space-y-3">
+                    <li className="flex items-start gap-3">
+                      <div className="w-1.5 h-1.5 rounded-full bg-primary mt-2" />
+                      <span>Acceso a recursos limitados</span>
+                    </li>
+                    <li className="flex items-start gap-3">
+                      <div className="w-1.5 h-1.5 rounded-full bg-primary mt-2" />
+                      <span>Asistencia a eventos limitados</span>
+                    </li>
+                    <li className="flex items-start gap-3">
+                      <div className="w-1.5 h-1.5 rounded-full bg-primary mt-2" />
+                      <span>Comunidad limitada</span>
+                    </li>
+                    <li className="flex items-start gap-3">
+                      <div className="w-1.5 h-1.5 rounded-full bg-primary mt-2" />
+                      <span>Soporte</span>
+                    </li>
+                  </ul>
+                  
+                  {/* Premium Upsell */}
+                  <div className="bg-blue-50 rounded-lg p-4 mt-4">
+                    <p className="font-semibold text-gray-800 mb-3">Desbloquea más con Premium:</p>
+                    <ul className="space-y-2">
+                      <li className="flex items-center gap-2">
+                        <span>✨</span>
+                        <span className="text-gray-700">Acceso a todos los recursos académicos</span>
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <span>✨</span>
+                        <span className="text-gray-700">Seminarios ilimitados + grabaciones</span>
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <span>✨</span>
+                        <span className="text-gray-700">Networking con profesionales</span>
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <span>✨</span>
+                        <span className="text-gray-700">Mentoría 1:1</span>
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <span>✨</span>
+                        <span className="text-gray-700">Soporte prioritario</span>
+                      </li>
+                    </ul>
+                  </div>
+                </div>
               )}
             </CardContent>
           </Card>
