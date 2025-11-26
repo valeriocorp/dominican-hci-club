@@ -7,6 +7,9 @@ import MembershipSection from '@/components/MembershipSection'
 import TestimonialsSection from '@/components/TestimonialsSection'
 import CTASection from '@/components/CTASection'
 import Footer from '@/components/Footer'
+
+// Obtener estado de sesión desde locals (poblados por middleware)
+const { isLoggedIn, userName } = Astro.locals;
 ---
 
 <Layout
@@ -15,7 +18,7 @@ import Footer from '@/components/Footer'
 >
   <div class="min-h-screen bg-background text-[rgba(0,0,0,1)]">
       <!-- Header -->
-      <Header client:load />
+      <Header client:load isLoggedIn={isLoggedIn} userName={userName ?? undefined} />
 
       <!-- Hero Section -->
       <HeroSection client:load />
