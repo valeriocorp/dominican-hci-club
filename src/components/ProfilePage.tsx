@@ -215,7 +215,7 @@ export default function ProfilePage({ user, isLoggedIn, currentPlan = 'free' }: 
                 <div>
                   <p className="font-medium">Email</p>
                   <a
-                    href="mailto:info@dhcis.edu.do"
+                    href="mailto:info@dominicanhciclub.com"
                     className="text-sm text-gray-600 hover:underline"
                   >
                     info@dominicanhciclub.com
