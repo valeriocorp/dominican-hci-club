@@ -18,7 +18,11 @@ export const registerCustomer = defineAction({
     }),
     handler: async (input, context) => {
         const { email, password, name, phone, plan_id } = input;
-        const { session } = context;
+        const { session, request } = context;
+
+        // Obtener origin del request para validación del backend
+        const origin = request.headers.get('origin') 
+            || new URL(request.url).origin;
 
         try {
             // Construir body solo con campos presentes
@@ -41,6 +45,7 @@ export const registerCustomer = defineAction({
                 headers: {
                     'Content-Type': 'application/json',
                     'X-Business-Key': BUSINESS_API_KEY,
+                    'Origin': origin,
                 },
                 body: JSON.stringify(body),
             });

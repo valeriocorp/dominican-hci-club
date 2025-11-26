@@ -15,7 +15,11 @@ export const loginCustomer = defineAction({
     }),
     handler: async (input, context) => {
         const { email, password } = input;
-        const { session } = context;
+        const { session, request } = context;
+        
+        // Obtener origin del request para validación del backend
+        const origin = request.headers.get('origin') 
+            || new URL(request.url).origin;
         
         try {
             const response = await fetch(`${SERVER_URL}${API_URL}`, {
@@ -23,6 +27,7 @@ export const loginCustomer = defineAction({
                 headers: {
                     'Content-Type': 'application/json',
                     'X-Business-Key': BUSINESS_API_KEY,
+                    'Origin': origin,
                 },
                 body: JSON.stringify({
                     email,
