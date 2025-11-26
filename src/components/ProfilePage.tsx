@@ -240,20 +240,10 @@ export default function ProfilePage({ user, isLoggedIn, currentPlan = 'free' }: 
           </Card>
 
           {/* Navigation Buttons */}
-          <div className="flex flex-col sm:flex-row gap-4 pt-4">
-            <Button className="flex-1" style={{ backgroundColor: '#192a6e' }} asChild>
-              <a href="/">
+          <div className="pt-4">
+            <Button className="w-full" style={{ backgroundColor: '#192a6e' }} asChild>
+              <a href="https://chat.whatsapp.com/H9efJ2wyGACEdurOVLbOpD" target="_blank" rel="noopener noreferrer">
                 Continua aprendiendo
-              </a>
-            </Button>
-            <Button variant="outline" className="flex-1" asChild>
-              <a href="/recuperacion">
-                Ver pantalla de recuperación
-              </a>
-            </Button>
-            <Button variant="outline" className="flex-1" asChild>
-              <a href="/profile-free">
-                Ver perfil gratis
               </a>
             </Button>
           </div>
