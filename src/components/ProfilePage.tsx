@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { actions } from 'astro:actions'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -6,19 +7,53 @@ import { Label } from '@/components/ui/label'
 import { CreditCard, LogOut, User, Mail, Phone, Edit } from 'lucide-react'
 import HeaderProfile from './HeaderProfile'
 
-export default function ProfilePage() {
-  const currentPlan = 'premium'
-  
-  const [isEditing, setIsEditing] = useState(false)
-  const [accountInfo, setAccountInfo] = useState({
-    name: 'Juan Pérez',
-    email: 'juan.perez@example.com',
-    memberSince: '15 de Enero, 2024'
-  })
+type PlanType = 'free' | 'premium'
 
-  const handleSaveAccountInfo = () => {
-    setIsEditing(false)
-    alert('Información guardada exitosamente')
+interface ProfilePageProps {
+  user: {
+    id: string;
+    name: string;
+    email: string;
+    phone?: string | null;
+    created_at?: string | null;
+  };
+  isLoggedIn: boolean;
+  /**
+   * Plan actual del usuario. Valor por defecto: 'free'.
+   * TODO: Cuando el backend exponga información de suscripción (ej. en /auth/customer/login 
+   * o mediante un endpoint dedicado), pasar el plan real desde profile.astro.
+   */
+  currentPlan?: PlanType;
+}
+
+export default function ProfilePage({ user, isLoggedIn, currentPlan = 'free' }: ProfilePageProps) {
+  
+  const [isLoggingOut, setIsLoggingOut] = useState(false)
+
+  const handleLogout = async () => {
+    setIsLoggingOut(true)
+    try {
+      await actions.auth.logout()
+      window.location.href = '/login'
+    } catch (error) {
+      console.error('Logout error:', error)
+      setIsLoggingOut(false)
+    }
+  }
+
+  // Formatear fecha de registro
+  const formatMemberSince = (dateString?: string | null) => {
+    if (!dateString) return 'Fecha no disponible'
+    try {
+      const date = new Date(dateString)
+      return date.toLocaleDateString('es-ES', {
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric'
+      })
+    } catch {
+      return 'Fecha no disponible'
+    }
   }
 
   return (
@@ -28,9 +63,20 @@ export default function ProfilePage() {
 
       <main className="container mx-auto px-4 py-8 max-w-4xl">
         {/* Profile Header */}
-        <div className="mb-8">
-          <h2 className="text-3xl font-bold mb-2" style={{ color: 'rgba(25,42,110,1)' }}>Mi perfil</h2>
-          <p className="text-gray-600">Gestiona tu información personal y suscripción</p>
+        <div className="mb-8 flex items-center justify-between">
+          <div>
+            <h2 className="text-3xl font-bold mb-2" style={{ color: 'rgba(25,42,110,1)' }}>Mi perfil</h2>
+            <p className="text-gray-600">Gestiona tu información personal y suscripción</p>
+          </div>
+          <Button
+            variant="outline"
+            onClick={handleLogout}
+            disabled={isLoggingOut}
+            className="flex items-center gap-2"
+          >
+            <LogOut className="w-4 h-4" />
+            {isLoggingOut ? 'Cerrando sesión...' : 'Cerrar sesión'}
+          </Button>
         </div>
 
         <div className="space-y-6">
@@ -42,80 +88,22 @@ export default function ProfilePage() {
                   <User className="w-5 h-5" style={{ color: 'rgba(25,42,110,1)' }} />
                   <CardTitle>Información de la cuenta</CardTitle>
                 </div>
-                {!isEditing ? (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setIsEditing(true)}
-                  >
-                    <Edit className="w-4 h-4 mr-2" />
-                    Editar
-                  </Button>
-                ) : (
-                  <div className="flex gap-2">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setIsEditing(false)}
-                    >
-                      Cancelar
-                    </Button>
-                    <Button
-                      size="sm"
-                      onClick={handleSaveAccountInfo}
-                      style={{ backgroundColor: '#192a6e' }}
-                    >
-                      Guardar
-                    </Button>
-                  </div>
-                )}
+                {/* TODO: Implementar edición de perfil cuando el backend lo soporte */}
               </div>
             </CardHeader>
             <CardContent className="space-y-4">
-              {isEditing ? (
-                <>
-                  <div className="space-y-2">
-                    <Label htmlFor="name">Nombre</Label>
-                    <Input
-                      id="name"
-                      value={accountInfo.name}
-                      onChange={(e) => setAccountInfo({ ...accountInfo, name: e.target.value })}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="email">Correo electrónico</Label>
-                    <Input
-                      id="email"
-                      type="email"
-                      value={accountInfo.email}
-                      onChange={(e) => setAccountInfo({ ...accountInfo, email: e.target.value })}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="memberSince">Miembro desde</Label>
-                    <Input
-                      id="memberSince"
-                      value={accountInfo.memberSince}
-                      onChange={(e) => setAccountInfo({ ...accountInfo, memberSince: e.target.value })}
-                    />
-                  </div>
-                </>
-              ) : (
-                <>
-                  <div>
-                    <p className="text-sm text-gray-500">Nombre</p>
-                    <p className="font-medium">{accountInfo.name}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-500">Correo electrónico</p>
-                    <p className="font-medium">{accountInfo.email}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-500">Miembro desde</p>
-                    <p className="font-medium">{accountInfo.memberSince}</p>
-                  </div>
-                </>
-              )}
+              <div>
+                <p className="text-sm text-gray-500">Nombre</p>
+                <p className="font-medium">{user.name}</p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-500">Correo electrónico</p>
+                <p className="font-medium">{user.email}</p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-500">Miembro desde</p>
+                <p className="font-medium">{formatMemberSince(user.created_at)}</p>
+              </div>
             </CardContent>
           </Card>
 
@@ -303,4 +291,3 @@ export default function ProfilePage() {
     </div>
   )
 }
-

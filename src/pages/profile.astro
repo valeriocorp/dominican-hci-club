@@ -1,12 +1,36 @@
 ---
 import Layout from '@/layouts/Layout.astro'
 import ProfilePage from '@/components/ProfilePage'
+
+// Obtener datos del usuario desde locals (poblados por middleware)
+const { isLoggedIn, userId, userEmail, userName } = Astro.locals;
+
+// Obtener datos completos del usuario desde la sesión
+const user = await Astro.session?.get('user');
+
+// Si no hay usuario, el middleware ya debería haber redirigido
+// pero agregamos verificación por seguridad
+if (!isLoggedIn || !user) {
+  return Astro.redirect('/login');
+}
+
+// TODO: Obtener plan de suscripción real del usuario
+// Opciones cuando el backend lo soporte:
+// 1. Desde la sesión: await Astro.session?.get('subscription')
+// 2. Desde el objeto user si incluye subscription_plan
+// 3. Mediante un endpoint dedicado: GET /subscriptions/current
+const currentPlan = 'free' as const;
 ---
 
 <Layout
   title="Mi Perfil - Dominican HCI Club"
   description="Gestiona tu cuenta premium y suscripción del Dominican HCI Club"
 >
-  <ProfilePage client:load />
+  <ProfilePage 
+    client:load 
+    user={user}
+    isLoggedIn={isLoggedIn}
+    currentPlan={currentPlan}
+  />
   
 </Layout>
