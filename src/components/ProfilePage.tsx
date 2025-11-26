@@ -1,10 +1,6 @@
-import { useState } from 'react'
-import { actions } from 'astro:actions'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { CreditCard, LogOut, User, Mail, Phone, Edit } from 'lucide-react'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { CreditCard, User, Mail, Phone } from 'lucide-react'
 import HeaderProfile from './HeaderProfile'
 
 type PlanType = 'free' | 'premium'
@@ -27,20 +23,6 @@ interface ProfilePageProps {
 }
 
 export default function ProfilePage({ user, isLoggedIn, currentPlan = 'free' }: ProfilePageProps) {
-  
-  const [isLoggingOut, setIsLoggingOut] = useState(false)
-
-  const handleLogout = async () => {
-    setIsLoggingOut(true)
-    try {
-      await actions.auth.logout()
-      window.location.href = '/login'
-    } catch (error) {
-      console.error('Logout error:', error)
-      setIsLoggingOut(false)
-    }
-  }
-
   // Formatear fecha de registro
   const formatMemberSince = (dateString?: string | null) => {
     if (!dateString) return 'Fecha no disponible'
@@ -63,20 +45,9 @@ export default function ProfilePage({ user, isLoggedIn, currentPlan = 'free' }: 
 
       <main className="container mx-auto px-4 py-8 max-w-4xl">
         {/* Profile Header */}
-        <div className="mb-8 flex items-center justify-between">
-          <div>
-            <h2 className="text-3xl font-bold mb-2" style={{ color: 'rgba(25,42,110,1)' }}>Mi perfil</h2>
-            <p className="text-gray-600">Gestiona tu información personal y suscripción</p>
-          </div>
-          <Button
-            variant="outline"
-            onClick={handleLogout}
-            disabled={isLoggingOut}
-            className="flex items-center gap-2"
-          >
-            <LogOut className="w-4 h-4" />
-            {isLoggingOut ? 'Cerrando sesión...' : 'Cerrar sesión'}
-          </Button>
+        <div className="mb-8">
+          <h2 className="text-3xl font-bold mb-2" style={{ color: 'rgba(25,42,110,1)' }}>Mi perfil</h2>
+          <p className="text-gray-600">Gestiona tu información personal y suscripción</p>
         </div>
 
         <div className="space-y-6">
