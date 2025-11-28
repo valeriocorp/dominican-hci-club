@@ -2,11 +2,26 @@ import { useEffect, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Sparkles, Check } from 'lucide-react'
+import { actions } from 'astro:actions'
 
 export default function PremiumWelcomePage() {
   const [showConfetti, setShowConfetti] = useState(true)
 
   useEffect(() => {
+    // Refrescar datos del usuario para actualizar la sesión con la suscripción premium
+    const refreshSession = async () => {
+      try {
+        await actions.auth.refreshUserData()
+        console.log('✅ Sesión actualizada con suscripción premium')
+      } catch (error) {
+        console.error('Error al actualizar sesión:', error)
+        // No mostramos error al usuario, solo log interno
+      }
+    }
+    
+    refreshSession()
+
+    // Configurar timer del confetti
     const timer = setTimeout(() => {
       setShowConfetti(false)
     }, 5000)
@@ -154,7 +169,7 @@ export default function PremiumWelcomePage() {
         {/* CTA Button */}
         <div className="text-center animate-fade-in-up animation-delay-600">
           <Button size="lg" className="px-8 py-6 text-lg" style={{ backgroundColor: '#192a6e' }} asChild>
-            <a href="/profile">
+            <a href="/">
               Nos vemos en el club 🚀
             </a>
           </Button>
