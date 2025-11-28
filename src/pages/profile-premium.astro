@@ -1,0 +1,25 @@
+---
+import Layout from '@/layouts/Layout.astro'
+import ProfilePremiumPage from '@/components/ProfilePremiumPage'
+
+// Obtener datos del usuario desde la sesión
+const { isLoggedIn } = Astro.locals;
+const user = await Astro.session?.get('user');
+const subscription = await Astro.session?.get('subscription');
+
+// Si no hay usuario, redirigir a login
+if (!isLoggedIn || !user) {
+  return Astro.redirect('/login');
+}
+---
+
+<Layout
+  title="Mi Perfil Premium - Dominican HCI Club"
+  description="Gestiona tu cuenta premium y suscripción del Dominican HCI Club"
+>
+  <ProfilePremiumPage 
+    client:load 
+    user={user}
+    subscription={subscription}
+  />
+</Layout>

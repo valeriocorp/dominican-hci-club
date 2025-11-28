@@ -1,7 +1,10 @@
+import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { CreditCard, User, Mail, Phone } from 'lucide-react'
+import { CreditCard, User, Mail, Phone, Loader2 } from 'lucide-react'
 import HeaderProfile from './HeaderProfile'
+import { toast } from 'sonner'
+import { actions } from 'astro:actions'
 
 type PlanType = 'free' | 'premium'
 
@@ -23,18 +26,32 @@ interface ProfilePageProps {
 }
 
 export default function ProfilePage({ user, isLoggedIn, currentPlan = 'free' }: ProfilePageProps) {
-  // Formatear fecha de registro
-  const formatMemberSince = (dateString?: string | null) => {
-    if (!dateString) return 'Fecha no disponible'
+  const [isUpgrading, setIsUpgrading] = useState(false)
+
+  const handleUpgradeToPremium = async () => {
+    setIsUpgrading(true)
     try {
-      const date = new Date(dateString)
-      return date.toLocaleDateString('es-ES', {
-        day: 'numeric',
-        month: 'long',
-        year: 'numeric'
+      const result = await actions.subscriptions.createSubscriptionCheckout({
+        customer_email: user.email,
+        plan_id: '9', // Plan Premium
+        success_url: `${window.location.origin}/premium-welcome`,
+        cancel_url: window.location.href,
       })
-    } catch {
-      return 'Fecha no disponible'
+
+      if (result.data?.data?.checkout_url) {
+        window.location.href = result.data.data.checkout_url
+      } else {
+        toast.error('Error al crear el checkout', {
+          description: 'No se pudo obtener la URL de pago. Por favor, intenta nuevamente.',
+        })
+        setIsUpgrading(false)
+      }
+    } catch (error) {
+      console.error('Error upgrading to premium:', error)
+      toast.error('Error al procesar el upgrade', {
+        description: 'Ocurrió un error inesperado. Por favor, intenta nuevamente.',
+      })
+      setIsUpgrading(false)
     }
   }
 
@@ -70,10 +87,6 @@ export default function ProfilePage({ user, isLoggedIn, currentPlan = 'free' }: 
               <div>
                 <p className="text-sm text-gray-500">Correo electrónico</p>
                 <p className="font-medium">{user.email}</p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-500">Miembro desde</p>
-                <p className="font-medium">{formatMemberSince(user.created_at)}</p>
               </div>
             </CardContent>
           </Card>
@@ -127,10 +140,20 @@ export default function ProfilePage({ user, isLoggedIn, currentPlan = 'free' }: 
                   <p className="text-gray-600">
                     ¡Maximiza tu potencial desbloqueando proyectos, mentorías y mucho más por solo $18 USD al mes! 👏
                   </p>
-                  <Button className="w-full" style={{ backgroundColor: '#192a6e' }} asChild>
-                    <a href="/register?plan=premium">
-                      Acceder a mi potencial premium✨
-                    </a>
+                  <Button 
+                    className="w-full" 
+                    style={{ backgroundColor: '#192a6e' }}
+                    onClick={handleUpgradeToPremium}
+                    disabled={isUpgrading}
+                  >
+                    {isUpgrading ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Procesando...
+                      </>
+                    ) : (
+                      'Acceder a mi potencial premium✨'
+                    )}
                   </Button>
                 </>
               )}

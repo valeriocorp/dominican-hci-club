@@ -47,6 +47,19 @@ export interface RegisterCustomerResponse {
 }
 
 /**
+ * Suscripción del customer
+ */
+export interface CustomerSubscription {
+  id: string;
+  plan_id: string;
+  plan_name: string;
+  plan_type: 'free' | 'premium';
+  status: string;
+  amount: string;
+  currency: string;
+}
+
+/**
  * Respuesta de login de customer
  * POST /auth/customer/login
  */
@@ -54,6 +67,7 @@ export interface LoginCustomerResponse {
   user: User;
   token: string;
   businesses: Business[];
+  subscription?: CustomerSubscription | null;
 }
 
 /**

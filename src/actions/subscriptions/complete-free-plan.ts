@@ -1,0 +1,75 @@
+import { defineAction } from 'astro:actions';
+import { z } from 'astro:schema';
+import { SERVER_URL, BUSINESS_API_KEY } from "astro:env/server";
+import { handleBackendResponse, createGenericError } from '@/utils/errorHandler';
+
+/**
+ * 🆓 COMPLETE FREE PLAN ACTION
+ * 
+ * Completa la suscripción a un plan gratuito después del registro.
+ * Crea la entrada en customer_subscriptions para el plan gratuito.
+ * 
+ * @returns { subscription_id: string, status: string }
+ */
+
+// ID del payment link recurrente para el plan gratuito
+// Este payment link fue creado en la DB con is_recurring=true y subscription_plan_id=10
+const FREE_PLAN_PAYMENT_LINK_ID = '85';
+
+export const completeFreePlan = defineAction({
+    accept: "json",
+    input: z.object({
+        customer_email: z.string().email('El correo electrónico no es válido'),
+        customer_name: z.string().optional(),
+        customer_phone: z.string().optional(),
+    }),
+    handler: async (input, context) => {
+        const { customer_email, customer_name, customer_phone } = input;
+        const { request } = context;
+
+        // Obtener origin del request para validación del backend
+        const origin = request.headers.get('origin') 
+            || new URL(request.url).origin;
+
+        try {
+            const body = {
+                payment_link_id: FREE_PLAN_PAYMENT_LINK_ID,
+                customer_email: customer_email.trim().toLowerCase(),
+                customer_name: customer_name?.trim(),
+                customer_phone: customer_phone?.trim(),
+            };
+
+            const response = await fetch(`${SERVER_URL}payment-links/recurring/free-plan/complete`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Business-Key': BUSINESS_API_KEY,
+                    'Origin': origin,
+                },
+                body: JSON.stringify(body),
+            });
+
+            const result = await handleBackendResponse<{
+                subscription_id: string;
+                status: string;
+            }>(response, 'Plan gratuito activado exitosamente');
+
+            return {
+                success: true,
+                message: result.message,
+                data: result.data
+            };
+
+        } catch (error) {
+            // Si es un ActionError del handleBackendResponse, lo relanzamos
+            if (error && typeof error === 'object' && 'code' in error) {
+                throw error;
+            }
+            
+            if (import.meta.env.DEV) {
+                console.error('Error completando plan gratuito:', error);
+            }
+            throw createGenericError('No se pudo activar el plan gratuito. Por favor, intenta nuevamente.');
+        }
+    }
+});

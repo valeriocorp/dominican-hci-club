@@ -24,11 +24,44 @@ const RETRY_DELAYS = [1000, 2000, 4000] // Exponential backoff
 
 type PasswordStrength = 'weak' | 'medium' | 'strong' | null
 
+// Tipo para los países
+interface CountryCode {
+  code: string
+  flag: string
+  name: string
+  iso: string
+}
+
+// Lista de países con códigos telefónicos y banderas
+const COUNTRY_CODES: CountryCode[] = [
+  { code: "+1", flag: "🇩🇴", name: "República Dominicana", iso: "DO" },
+  { code: "+1", flag: "🇺🇸", name: "Estados Unidos", iso: "US" },
+  { code: "+1", flag: "🇨🇦", name: "Canadá", iso: "CA" },
+  { code: "+1", flag: "🇵🇷", name: "Puerto Rico", iso: "PR" },
+  { code: "+52", flag: "🇲🇽", name: "México", iso: "MX" },
+  { code: "+34", flag: "🇪🇸", name: "España", iso: "ES" },
+  { code: "+54", flag: "🇦🇷", name: "Argentina", iso: "AR" },
+  { code: "+56", flag: "🇨🇱", name: "Chile", iso: "CL" },
+  { code: "+57", flag: "🇨🇴", name: "Colombia", iso: "CO" },
+  { code: "+51", flag: "🇵🇪", name: "Perú", iso: "PE" },
+  { code: "+58", flag: "🇻🇪", name: "Venezuela", iso: "VE" },
+  { code: "+507", flag: "🇵🇦", name: "Panamá", iso: "PA" },
+  { code: "+506", flag: "🇨🇷", name: "Costa Rica", iso: "CR" },
+  { code: "+502", flag: "🇬🇹", name: "Guatemala", iso: "GT" },
+  { code: "+503", flag: "🇸🇻", name: "El Salvador", iso: "SV" },
+  { code: "+504", flag: "🇭🇳", name: "Honduras", iso: "HN" },
+  { code: "+505", flag: "🇳🇮", name: "Nicaragua", iso: "NI" },
+  { code: "+593", flag: "🇪🇨", name: "Ecuador", iso: "EC" },
+  { code: "+591", flag: "🇧🇴", name: "Bolivia", iso: "BO" },
+  { code: "+595", flag: "🇵🇾", name: "Paraguay", iso: "PY" },
+  { code: "+598", flag: "🇺🇾", name: "Uruguay", iso: "UY" },
+]
+
 export default function RegisterForm() {
   const [name, setName] = useState("")
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
-  const [countryCode, setCountryCode] = useState("+1")
+  const [selectedCountry, setSelectedCountry] = useState(COUNTRY_CODES[0]) // República Dominicana por defecto
   const [whatsapp, setWhatsapp] = useState("")
   const [plan, setPlan] = useState("free")
   const [isLoading, setIsLoading] = useState(false)
@@ -113,12 +146,17 @@ export default function RegisterForm() {
 
   const performRegistration = async (): Promise<boolean> => {
     // Formatear teléfono completo (código país + número)
-    const fullPhone = whatsapp.trim() ? `${countryCode}${whatsapp}` : undefined
+    const fullPhone = whatsapp.trim() ? `${selectedCountry.code}${whatsapp}` : undefined
+
+    // IDs de planes del negocio (business_id: 89)
+    // Estos IDs corresponden a los planes en la tabla customer_subscription_plans
+    const PLAN_IDS = {
+      free: '10',    // Plan Gratis - $0.00/mes
+      premium: '9'   // Plan Premium - $18.00/mes
+    } as const
 
     // Determinar plan_id basado en la selección del usuario
-    // TODO: Reemplazar con ID real del plan premium desde configuración
-    const PREMIUM_PLAN_ID = 'premium-plan-id'
-    const planId: string | undefined = plan === 'premium' ? PREMIUM_PLAN_ID : undefined
+    const planId = PLAN_IDS[plan as keyof typeof PLAN_IDS]
 
     const payload = {
       email: email.trim(),
@@ -128,19 +166,111 @@ export default function RegisterForm() {
       plan_id: planId
     }
 
+    // 1. Registrar usuario
     const result = await actions.auth.registerCustomer(payload)
     if (result.error) {
       throw result.error
     }
 
-    toast.success("Cuenta creada exitosamente", {
-      description: "Bienvenido/a al Dominican HCI Club. Redirigiendo..."
-    })
+    const customerEmail = email.trim().toLowerCase()
+    const customerName = name.trim()
 
-    // Small delay for toast to be visible
-    setTimeout(() => {
-      window.location.href = "/confirmation"
-    }, 500)
+    // 2. Procesar según el plan seleccionado
+    if (plan === 'free') {
+      // Plan Gratuito: Completar suscripción gratuita
+      toast.loading("Activando tu plan gratuito...", { id: 'activating-plan' })
+      
+      try {
+        const freePlanResult = await actions.subscriptions.completeFreePlan({
+          customer_email: customerEmail,
+          customer_name: customerName,
+          customer_phone: fullPhone,
+        })
+
+        toast.dismiss('activating-plan')
+
+        if (freePlanResult.error) {
+          console.error('Error activando plan gratuito:', freePlanResult.error)
+          // Continuamos aunque falle, el usuario ya está registrado
+          toast.warning("Tu cuenta fue creada, pero hubo un problema activando el plan gratuito.", {
+            description: "Contacta soporte si no puedes acceder a tu plan."
+          })
+        } else {
+          toast.success("¡Cuenta creada y plan gratuito activado!", {
+            description: "Bienvenido/a al Dominican HCI Club. Redirigiendo..."
+          })
+        }
+
+        setTimeout(() => {
+          window.location.href = "/confirmation"
+        }, 1000)
+
+      } catch (error) {
+        toast.dismiss('activating-plan')
+        console.error('Error en completeFreePlan:', error)
+        // Aún así redirigimos porque el usuario ya está registrado
+        toast.success("Cuenta creada exitosamente", {
+          description: "Redirigiendo..."
+        })
+        setTimeout(() => {
+          window.location.href = "/confirmation"
+        }, 1000)
+      }
+
+    } else {
+      // Plan Premium: Crear checkout de Stripe
+      toast.loading("Preparando el checkout...", { id: 'preparing-checkout' })
+
+      try {
+        const checkoutResult = await actions.subscriptions.createSubscriptionCheckout({
+          plan_id: planId,
+          customer_email: customerEmail,
+          customer_name: customerName,
+          customer_phone: fullPhone,
+          currency: 'USD',
+          success_url: `${window.location.origin}/welcome`,
+          cancel_url: `${window.location.origin}/register`,
+        })
+
+        toast.dismiss('preparing-checkout')
+
+        if (checkoutResult.error) {
+          console.error('Error creando checkout:', checkoutResult.error)
+          toast.error("Error al preparar el pago", {
+            description: "Tu cuenta fue creada. Puedes completar el pago desde tu perfil."
+          })
+          setTimeout(() => {
+            window.location.href = "/profile"
+          }, 2000)
+        } else if (checkoutResult.data?.data?.checkout_url) {
+          const checkoutUrl = checkoutResult.data.data.checkout_url
+          toast.success("¡Cuenta creada! Redirigiendo al pago...", {
+            description: "Serás redirigido a Stripe para completar tu suscripción."
+          })
+          // Redirigir al checkout de Stripe
+          setTimeout(() => {
+            window.location.href = checkoutUrl
+          }, 1500)
+        } else {
+          toast.warning("Tu cuenta fue creada", {
+            description: "Puedes completar el pago del plan premium desde tu perfil."
+          })
+          setTimeout(() => {
+            window.location.href = "/profile"
+          }, 2000)
+        }
+
+      } catch (error) {
+        toast.dismiss('preparing-checkout')
+        console.error('Error en createSubscriptionCheckout:', error)
+        toast.warning("Tu cuenta fue creada", {
+          description: "Puedes completar el pago del plan premium desde tu perfil."
+        })
+        setTimeout(() => {
+          window.location.href = "/profile"
+        }, 2000)
+      }
+    }
 
     return true
   }
@@ -383,10 +513,13 @@ export default function RegisterForm() {
                 </Label>
                 <div className="flex gap-2">
                   <select
-                    value={countryCode}
-                    onChange={(e) => setCountryCode(e.target.value)}
+                    value={selectedCountry.iso}
+                    onChange={(e) => {
+                      const country = COUNTRY_CODES.find(c => c.iso === e.target.value)
+                      if (country) setSelectedCountry(country)
+                    }}
                     disabled={isLoading}
-                    className="h-10 w-[90px] rounded-md border border-input bg-white px-2 py-2 text-sm appearance-none cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                    className="h-10 w-[120px] rounded-md border border-input bg-white px-2 py-2 text-sm appearance-none cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                     style={{
                       backgroundImage:
                         "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23666' d='M6 9L1 4h10z'/%3E%3C/svg%3E\")",
@@ -394,16 +527,11 @@ export default function RegisterForm() {
                       backgroundPosition: "right 0.5rem center",
                     }}
                   >
-                    <option value="+1">+1</option>
-                    <option value="+52">+52</option>
-                    <option value="+34">+34</option>
-                    <option value="+54">+54</option>
-                    <option value="+56">+56</option>
-                    <option value="+57">+57</option>
-                    <option value="+51">+51</option>
-                    <option value="+58">+58</option>
-                    <option value="+507">+507</option>
-                    <option value="+506">+506</option>
+                    {COUNTRY_CODES.map((country) => (
+                      <option key={country.iso} value={country.iso}>
+                        {country.flag} {country.code}
+                      </option>
+                    ))}
                   </select>
                   <Input
                     ref={whatsappInputRef}

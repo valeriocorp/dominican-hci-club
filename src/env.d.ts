@@ -1,6 +1,9 @@
 /// <reference path="../.astro/types.d.ts" />
 /// <reference types="astro/client" />
 
+//? Convertir a módulo para que declare global funcione
+export {};
+
 interface ImportMetaEnv {
   readonly SERVER_URL: string;
   readonly SECRET_KEY: string;
@@ -13,7 +16,8 @@ interface ImportMeta {
   readonly env: ImportMetaEnv;
 }
 
-declare namespace App {
+declare global {
+  namespace App {
   /**
    * Usuario del backend larimar (modelo users sin password)
    * Respuesta de /auth/customer/login y /auth/customer/register
@@ -47,6 +51,19 @@ declare namespace App {
   }
 
   /**
+   * Suscripción del customer
+   */
+  interface CustomerSubscription {
+    id: string;
+    plan_id: string;
+    plan_name: string;
+    plan_type: 'free' | 'premium';
+    status: string;
+    amount: string;
+    currency: string;
+  }
+
+  /**
    * Respuesta de autenticación del backend
    * POST /auth/customer/login
    * POST /auth/customer/register
@@ -55,6 +72,7 @@ declare namespace App {
     user: CustomerUser;
     token: string;
     businesses: CustomerBusiness[];
+    subscription?: CustomerSubscription | null;
   }
 
   /**
@@ -73,6 +91,7 @@ declare namespace App {
     user: CustomerUser;
     token: string;
     businesses: CustomerBusiness[];
+    subscription?: CustomerSubscription | null;
     currentBusinessId?: string;
     time_since_last_session_check?: number;
   }
@@ -87,5 +106,7 @@ declare namespace App {
     userName: string | null;
     token: string | null;
     currentBusinessId: string | null;
+    subscription: CustomerSubscription | null;
+  }
   }
 }

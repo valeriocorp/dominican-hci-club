@@ -12,6 +12,7 @@ import {
     clearSession,
     getSessionToken,
     getCurrentBusinessId,
+    getSessionSubscription,
 } from "@/utils/sessionHelpers";
 import { server } from "@/actions";
 
@@ -26,7 +27,7 @@ const SESSION_CHECK_INTERVAL = 5 * 60 * 1000;
 //? Si un usuario no autenticado intenta acceder, será redirigido a /login
 const privateRoutes = [
     '/profile',
-    '/profile-free',
+    '/profile-premium',
     '/welcome',
     '/premium-welcome',
     '/plan-changed',
@@ -146,9 +147,10 @@ export const onRequest = defineMiddleware(
         //? Determinar el usuario actual basado en si se destruyó la sesión
         const currentUser = shouldDestroySession ? null : user;
 
-        //? Obtener token y businessId de la sesión (almacenados separadamente del user)
+        //? Obtener token, businessId y subscription de la sesión
         const token = await getSessionToken(session);
         const currentBusinessId = await getCurrentBusinessId(session);
+        const subscription = await getSessionSubscription(session);
 
         //? ==========================================
         //? CONFIGURACIÓN DE LOCALS PARA ASTRO 5.0
@@ -156,14 +158,13 @@ export const onRequest = defineMiddleware(
 
         //? Configurar el objeto locals que estará disponible en todas las páginas y componentes
         //? Según la interfaz App.Locals definida en src/env.d.ts
-        Object.assign(locals, {
-            isLoggedIn: isValidSession && !!currentUser,
-            userId: currentUser?.id || null,
-            userEmail: currentUser?.email || null,
-            userName: currentUser?.name || null,
-            token: shouldDestroySession ? null : token,
-            currentBusinessId: shouldDestroySession ? null : currentBusinessId,
-        });
+        locals.isLoggedIn = isValidSession && !!currentUser;
+        locals.userId = currentUser?.id || null;
+        locals.userEmail = currentUser?.email || null;
+        locals.userName = currentUser?.name || null;
+        locals.token = shouldDestroySession ? null : token;
+        locals.currentBusinessId = shouldDestroySession ? null : currentBusinessId;
+        locals.subscription = shouldDestroySession ? null : subscription;
 
         //? ==========================================
         //? CONTROL DE ACCESO A RUTAS
@@ -187,6 +188,35 @@ export const onRequest = defineMiddleware(
         //? Redirigirlo a login para que se autentique primero
         if (!locals.isLoggedIn && privateRoutes.some(route => pathname.startsWith(route))) {
             return redirect('/login');
+        }
+
+        //? ===================================
+        //? REDIRECCIÓN: SEGÚN TIPO DE PLAN
+        //? ===================================
+
+        //? Si el usuario está logueado, redirigir según su tipo de plan
+        if (locals.isLoggedIn && locals.subscription) {
+            const planType = locals.subscription.plan_type;
+            
+            //? Plan GRATIS: Redirigir de /welcome a /confirmation
+            if (planType === 'free' && pathname === '/welcome') {
+                return redirect('/confirmation');
+            }
+            
+            //? Plan PREMIUM: Redirigir de /confirmation a /welcome
+            if (planType === 'premium' && pathname === '/confirmation') {
+                return redirect('/welcome');
+            }
+
+            //? Plan GRATIS: Redirigir de /profile-premium a /profile
+            if (planType === 'free' && pathname === '/profile-premium') {
+                return redirect('/profile');
+            }
+            
+            //? Plan PREMIUM: Redirigir de /profile a /profile-premium
+            if (planType === 'premium' && pathname === '/profile') {
+                return redirect('/profile-premium');
+            }
         }
 
         //? ==========================================

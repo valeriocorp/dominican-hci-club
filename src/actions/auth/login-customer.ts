@@ -50,6 +50,7 @@ export const loginCustomer = defineAction({
                 session?.set('user', result.data.user);
                 session?.set('token', result.data.token);
                 session?.set('businesses', result.data.businesses);
+                session?.set('subscription', result.data.subscription || null);
             }
 
             return {

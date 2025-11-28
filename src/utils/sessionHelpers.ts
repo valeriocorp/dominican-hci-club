@@ -1,9 +1,22 @@
 import type { APIContext } from 'astro';
+import type { User, Business, CustomerSubscription } from '@/types/ApiResponse';
 
 /**
  * Tipo de sesión de Astro extraído del APIContext
  */
 type AstroSession = APIContext['session'];
+
+/**
+ * Datos almacenados en la sesión
+ */
+interface SessionData {
+  user: User;
+  token: string;
+  businesses: Business[];
+  subscription?: CustomerSubscription | null;
+  currentBusinessId?: string;
+  time_since_last_session_check?: number;
+}
 
 /**
  * Obtiene el usuario de la sesión
@@ -12,7 +25,7 @@ type AstroSession = APIContext['session'];
  */
 export async function getSessionUser(
   session: AstroSession
-): Promise<App.CustomerUser | null> {
+): Promise<User | null> {
   if (!session) return null;
   return (await session.get('user')) ?? null;
 }
@@ -36,9 +49,21 @@ export async function getSessionToken(
  */
 export async function getSessionBusinesses(
   session: AstroSession
-): Promise<App.CustomerBusiness[] | null> {
+): Promise<Business[] | null> {
   if (!session) return null;
   return (await session.get('businesses')) ?? null;
+}
+
+/**
+ * Obtiene la suscripción del customer desde la sesión
+ * @param session - Instancia de la sesión de Astro
+ * @returns Suscripción o null si no existe
+ */
+export async function getSessionSubscription(
+  session: AstroSession
+): Promise<CustomerSubscription | null> {
+  if (!session) return null;
+  return (await session.get('subscription')) ?? null;
 }
 
 /**
@@ -98,7 +123,7 @@ export function updateSessionCheckTimestamp(
  */
 export function setSessionData(
   session: AstroSession,
-  data: Partial<App.SessionData>
+  data: Partial<SessionData>
 ): void {
   if (!session) return;
 
@@ -110,6 +135,9 @@ export function setSessionData(
   }
   if (data.businesses !== undefined) {
     session.set('businesses', data.businesses);
+  }
+  if (data.subscription !== undefined) {
+    session.set('subscription', data.subscription);
   }
   if (data.currentBusinessId !== undefined) {
     session.set('currentBusinessId', data.currentBusinessId);
@@ -137,23 +165,25 @@ export function clearSession(
  */
 export async function getFullSessionData(
   session: AstroSession
-): Promise<Partial<App.SessionData>> {
+): Promise<Partial<SessionData>> {
   if (!session) return {};
 
-  const [user, token, businesses, currentBusinessId, time_since_last_session_check] =
+  const [user, token, businesses, subscription, currentBusinessId, time_since_last_session_check] =
     await Promise.all([
       session.get('user'),
       session.get('token'),
       session.get('businesses'),
+      session.get('subscription'),
       session.get('currentBusinessId'),
       session.get('time_since_last_session_check'),
     ]);
 
-  const result: Partial<App.SessionData> = {};
+  const result: Partial<SessionData> = {};
 
   if (user !== undefined) result.user = user;
   if (token !== undefined) result.token = token;
   if (businesses !== undefined) result.businesses = businesses;
+  if (subscription !== undefined) result.subscription = subscription;
   if (currentBusinessId !== undefined) result.currentBusinessId = currentBusinessId;
   if (time_since_last_session_check !== undefined) {
     result.time_since_last_session_check = time_since_last_session_check;
