@@ -21,22 +21,22 @@ export default function Footer() {
               <h3 className="text-lg font-bold text-[#192a6e] mb-4">Servicios</h3>
               <ul className="space-y-2">
                 <li>
-                  <a href="#" className="text-sm text-muted-foreground hover:text-[#192a6e] transition-colors">
+                  <a href="#soporte" className="text-sm text-muted-foreground hover:text-[#192a6e] transition-colors">
                     Ofertas académicas
                   </a>
                 </li>
                 <li>
-                  <a href="#" className="text-sm text-muted-foreground hover:text-[#192a6e] transition-colors">
+                  <a href="#membresia" className="text-sm text-muted-foreground hover:text-[#192a6e] transition-colors">
                     Comunidad
                   </a>
                 </li>
                 <li>
-                  <a href="#" className="text-sm text-muted-foreground hover:text-[#192a6e] transition-colors">
+                  <a href="#membresia" className="text-sm text-muted-foreground hover:text-[#192a6e] transition-colors">
                     Biblioteca de recursos
                   </a>
                 </li>
                 <li>
-                  <a href="#" className="text-sm text-muted-foreground hover:text-[#192a6e] transition-colors">
+                  <a href="#soporte" className="text-sm text-muted-foreground hover:text-[#192a6e] transition-colors">
                     Mentorías y seguimiento
                   </a>
                 </li>
@@ -48,22 +48,22 @@ export default function Footer() {
               <h3 className="text-lg font-bold text-[#192a6e] mb-4">Soporte</h3>
               <ul className="space-y-2">
                 <li>
-                  <a href="#" className="text-sm text-muted-foreground hover:text-[#192a6e] transition-colors">
+                  <a href="#soporte" className="text-sm text-muted-foreground hover:text-[#192a6e] transition-colors">
                     Chat directo
                   </a>
                 </li>
                 <li>
-                  <a href="#" className="text-sm text-muted-foreground hover:text-[#192a6e] transition-colors">
+                  <a href="#soporte" className="text-sm text-muted-foreground hover:text-[#192a6e] transition-colors">
                     Preguntas frecuentes
                   </a>
                 </li>
                 <li>
-                  <a href="#" className="text-sm text-muted-foreground hover:text-[#192a6e] transition-colors">
+                  <a href="#membresia" className="text-sm text-muted-foreground hover:text-[#192a6e] transition-colors">
                     Guías de estudio
                   </a>
                 </li>
                 <li>
-                  <a href="#" className="text-sm text-muted-foreground hover:text-[#192a6e] transition-colors">
+                  <a href="#soporte" className="text-sm text-muted-foreground hover:text-[#192a6e] transition-colors">
                     Centro de ayuda
                   </a>
                 </li>
@@ -76,7 +76,7 @@ export default function Footer() {
               <ul className="space-y-2">
                 <li>
                   <a
-                    href="mailto:info@dhcis.edu.do"
+                    href="mailto:info@dominicanhciclub.com"
                     className="text-sm text-muted-foreground hover:text-[#192a6e] transition-colors flex items-center gap-2"
                   >
                     <Mail className="w-4 h-4 shrink-0" />
@@ -85,7 +85,9 @@ export default function Footer() {
                 </li>
                 <li>
                   <a
-                    href="tel:+18496529014"
+                    href="https://wa.me/18496529014"
+                    target="_blank"
+                    rel="noopener noreferrer"
                     className="text-sm text-muted-foreground hover:text-[#192a6e] transition-colors flex items-center gap-2"
                   >
                     <Phone className="w-4 h-4 shrink-0" />

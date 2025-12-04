@@ -1,7 +1,15 @@
 import { defineAction } from 'astro:actions';
 import { SERVER_URL } from "astro:env/server";
 import { handleBackendResponse, createGenericError } from '@/utils/errorHandler';
-import { saveSessionData } from '@/utils/sessionHelpers';
+
+/**
+ * Tipo de respuesta del endpoint /auth/customer/me
+ */
+interface RefreshUserDataResponse {
+    user: App.CustomerUser;
+    businesses: App.CustomerBusiness[];
+    subscription?: App.CustomerSubscription | null;
+}
 
 /**
  * Action para refrescar los datos del usuario desde el backend
@@ -9,7 +17,11 @@ import { saveSessionData } from '@/utils/sessionHelpers';
  */
 export const refreshUserData = defineAction({
     accept: "json",
-    handler: async (_, context) => {
+    handler: async (_, context): Promise<{
+        success: boolean;
+        message: string;
+        data?: RefreshUserDataResponse;
+    }> => {
         const { session } = context;
 
         try {
@@ -33,7 +45,7 @@ export const refreshUserData = defineAction({
             });
 
             // Usar el manejador de respuestas del backend
-            const result = await handleBackendResponse(
+            const result = await handleBackendResponse<RefreshUserDataResponse>(
                 response, 
                 'Datos actualizados correctamente'
             );

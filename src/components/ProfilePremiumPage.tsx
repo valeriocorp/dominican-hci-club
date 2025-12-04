@@ -238,7 +238,7 @@ export default function ProfilePremiumPage({ user, subscription }: ProfilePremiu
               <div className="flex items-start gap-3">
                 <Phone className="w-5 h-5 mt-0.5" style={{ color: '#192a6e' }} />
                 <div>
-                  <p className="font-medium">WhatsApp prioritario</p>
+                  <p className="font-medium">WhatsApp</p>
                   <a
                     href="https://wa.me/18496529014"
                     target="_blank"

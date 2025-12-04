@@ -3,6 +3,51 @@ import Layout from '@/layouts/Layout.astro'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import ButtonWelcomeCard from '@/components/ButtonWelcomeCard'
+import { getSessionUser, getSessionSubscription } from '@/utils/sessionHelpers'
+import { sendWelcomePremiumEmailInternal } from '@/actions/email'
+import { server } from '@/actions'
+
+// Obtener datos del usuario de la sesión
+let user = await getSessionUser(Astro.session);
+let subscription = await getSessionSubscription(Astro.session);
+
+// Si no hay suscripción en la sesión, intentar refrescar los datos
+if (user && !subscription) {
+  try {
+    const refreshResult = await Astro.callAction(server.auth.refreshUserData, {});
+    if (refreshResult.data?.success && refreshResult.data?.data?.subscription) {
+      subscription = refreshResult.data.data.subscription;
+    }
+  } catch (error) {
+    // Error silencioso - el correo simplemente no se enviará
+  }
+}
+
+// Verificar si ya se envió el correo de bienvenida (usando cookie)
+const welcomeEmailSent = Astro.cookies.get('welcome_email_sent')?.value === 'true';
+
+// Determinar si es plan premium (plan_id '9' es premium según la DB, o amount > 0)
+const isPremium = subscription?.plan_id === '9' || (subscription?.amount && Number(subscription.amount) > 0);
+
+// Enviar correo de bienvenida SOLO si:
+// 1. Tenemos datos del usuario
+// 2. Es plan premium
+// 3. No se ha enviado antes (evitar duplicados)
+if (user?.email && user?.name && isPremium && !welcomeEmailSent) {
+  // Marcar como enviado inmediatamente (cookie válida por 30 días)
+  Astro.cookies.set('welcome_email_sent', 'true', {
+    path: '/',
+    maxAge: 60 * 60 * 24 * 30, // 30 días
+    httpOnly: true,
+    secure: import.meta.env.PROD,
+    sameSite: 'lax'
+  });
+
+  // Enviar correo en background para no bloquear la carga
+  sendWelcomePremiumEmailInternal(user.email, user.name).catch(() => {
+    // Error silencioso - no bloquear la experiencia del usuario
+  });
+}
 ---
 
 <Layout

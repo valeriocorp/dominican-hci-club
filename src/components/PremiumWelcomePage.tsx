@@ -63,14 +63,14 @@ export default function PremiumWelcomePage() {
             ¡Bienvenid@ al Plan Premium!
           </h1>
           <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-            Has dado el primer paso para transformar tu carrera en HCI
+          ¡Has dado el primer paso para transformar tu carrera en HCI!
           </p>
         </div>
 
         {/* Premium Benefits */}
         <Card className="mb-8 border-2 animate-fade-in-up animation-delay-200" style={{ borderColor: '#192a6e' }}>
           <CardHeader>
-            <CardTitle className="text-2xl text-center">Tus Beneficios Premium</CardTitle>
+            <CardTitle className="text-2xl text-center">Tus beneficios Premium</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid md:grid-cols-2 gap-6">

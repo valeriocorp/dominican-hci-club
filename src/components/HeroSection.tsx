@@ -39,8 +39,11 @@ export default function HeroSection() {
               size="lg"
               variant="outline"
               className="text-lg px-10 py-6 border-2 border-[rgba(25,42,110,0.3)] hover:border-[rgba(25,42,110,0.5)] hover:bg-[rgba(25,42,110,0.05)] transition-all bg-transparent text-[rgba(25,42,110,1)]"
+              asChild
             >
-              Quiero saber más 💡
+              <a href="#sobre-nosotros">
+                Quiero saber más 💡
+              </a>
             </Button>
           </div>
         </div>

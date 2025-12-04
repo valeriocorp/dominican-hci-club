@@ -2,12 +2,14 @@ import { defineAction } from 'astro:actions';
 import { z } from 'astro:schema';
 import { SERVER_URL, BUSINESS_API_KEY } from "astro:env/server";
 import { handleBackendResponse, createGenericError } from '@/utils/errorHandler';
+import { sendWelcomeBasicEmailInternal } from '@/actions/email';
 
 /**
  * 🆓 COMPLETE FREE PLAN ACTION
  * 
  * Completa la suscripción a un plan gratuito después del registro.
  * Crea la entrada en customer_subscriptions para el plan gratuito.
+ * También envía el correo de bienvenida al usuario.
  * 
  * @returns { subscription_id: string, status: string }
  */
@@ -53,6 +55,22 @@ export const completeFreePlan = defineAction({
                 subscription_id: string;
                 status: string;
             }>(response, 'Plan gratuito activado exitosamente');
+
+            // Enviar correo de bienvenida (en background, sin bloquear la respuesta)
+            if (result.data) {
+                sendWelcomeBasicEmailInternal(
+                    customer_email,
+                    customer_name || 'Usuario'
+                ).then((emailResult) => {
+                    if (emailResult.success) {
+                        console.log(`📧 Correo de bienvenida enviado exitosamente a ${customer_email}`);
+                    } else {
+                        console.error(`📧 Error enviando correo de bienvenida:`, emailResult.error);
+                    }
+                }).catch((error) => {
+                    console.error(`📧 Error inesperado enviando correo:`, error);
+                });
+            }
 
             return {
                 success: true,
