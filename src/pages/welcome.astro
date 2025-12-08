@@ -6,6 +6,7 @@ import ButtonWelcomeCard from '@/components/ButtonWelcomeCard'
 import { getSessionUser, getSessionSubscription } from '@/utils/sessionHelpers'
 import { sendWelcomePremiumEmailInternal } from '@/actions/email'
 import { server } from '@/actions'
+import { PUBLIC_PREMIUM_PLAN_ID } from 'astro:env/client'
 
 // Obtener datos del usuario de la sesión
 let user = await getSessionUser(Astro.session);
@@ -26,8 +27,8 @@ if (user && !subscription) {
 // Verificar si ya se envió el correo de bienvenida (usando cookie)
 const welcomeEmailSent = Astro.cookies.get('welcome_email_sent')?.value === 'true';
 
-// Determinar si es plan premium (plan_id '9' es premium según la DB, o amount > 0)
-const isPremium = subscription?.plan_id === '9' || (subscription?.amount && Number(subscription.amount) > 0);
+// Determinar si es plan premium (usando variable de entorno o amount > 0)
+const isPremium = subscription?.plan_id === PUBLIC_PREMIUM_PLAN_ID || (subscription?.amount && Number(subscription.amount) > 0);
 
 // Enviar correo de bienvenida SOLO si:
 // 1. Tenemos datos del usuario

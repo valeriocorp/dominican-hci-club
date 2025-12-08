@@ -64,6 +64,23 @@ export default defineConfig({
         access: "secret",
         context: "server",
       }),
+      // ID del payment link recurrente para el plan gratuito
+      // Dev: 85, Prod: 11
+      FREE_PLAN_PAYMENT_LINK_ID: envField.string({
+        access: "secret",
+        context: "server",
+      }),
+      // IDs de los planes de suscripción (públicos para uso en componentes React)
+      // Plan Gratis - Dev: 10, Prod: 1
+      PUBLIC_FREE_PLAN_ID: envField.string({
+        access: "public",
+        context: "client",
+      }),
+      // Plan Premium - Dev: 9, Prod: 2
+      PUBLIC_PREMIUM_PLAN_ID: envField.string({
+        access: "public",
+        context: "client",
+      }),
     },
   },
 

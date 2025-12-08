@@ -1,6 +1,7 @@
 import type React from "react"
 import { useState, useEffect, useRef } from "react"
 import { actions } from "astro:actions"
+import { PUBLIC_FREE_PLAN_ID, PUBLIC_PREMIUM_PLAN_ID } from "astro:env/client"
 import { toast } from "sonner"
 import { Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -148,11 +149,11 @@ export default function RegisterForm() {
     // Formatear teléfono completo (código país + número)
     const fullPhone = whatsapp.trim() ? `${selectedCountry.code}${whatsapp}` : undefined
 
-    // IDs de planes del negocio (business_id: 89)
-    // Estos IDs corresponden a los planes en la tabla customer_subscription_plans
+    // IDs de planes del negocio - configurados via variables de entorno
+    // Dev: free=10, premium=9 | Prod: free=1, premium=2
     const PLAN_IDS = {
-      free: '10',    // Plan Gratis - $0.00/mes
-      premium: '9'   // Plan Premium - $18.00/mes
+      free: PUBLIC_FREE_PLAN_ID,
+      premium: PUBLIC_PREMIUM_PLAN_ID
     } as const
 
     // Determinar plan_id basado en la selección del usuario

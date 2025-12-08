@@ -1,6 +1,6 @@
 import { defineAction } from 'astro:actions';
 import { z } from 'astro:schema';
-import { SERVER_URL, BUSINESS_API_KEY } from "astro:env/server";
+import { SERVER_URL, BUSINESS_API_KEY, FREE_PLAN_PAYMENT_LINK_ID } from "astro:env/server";
 import { handleBackendResponse, createGenericError } from '@/utils/errorHandler';
 import { sendWelcomeBasicEmailInternal } from '@/actions/email';
 
@@ -13,10 +13,6 @@ import { sendWelcomeBasicEmailInternal } from '@/actions/email';
  * 
  * @returns { subscription_id: string, status: string }
  */
-
-// ID del payment link recurrente para el plan gratuito
-// Este payment link fue creado en la DB con is_recurring=true y subscription_plan_id=10
-const FREE_PLAN_PAYMENT_LINK_ID = '85';
 
 export const completeFreePlan = defineAction({
     accept: "json",

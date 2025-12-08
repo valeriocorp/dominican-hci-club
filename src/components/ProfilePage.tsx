@@ -5,6 +5,7 @@ import { CreditCard, User, Mail, Phone, Loader2 } from 'lucide-react'
 import HeaderProfile from './HeaderProfile'
 import { toast } from 'sonner'
 import { actions } from 'astro:actions'
+import { PUBLIC_PREMIUM_PLAN_ID } from 'astro:env/client'
 
 type PlanType = 'free' | 'premium'
 
@@ -33,7 +34,7 @@ export default function ProfilePage({ user, isLoggedIn, currentPlan = 'free' }: 
     try {
       const result = await actions.subscriptions.createSubscriptionCheckout({
         customer_email: user.email,
-        plan_id: '9', // Plan Premium
+        plan_id: PUBLIC_PREMIUM_PLAN_ID,
         success_url: `${window.location.origin}/premium-welcome`,
         cancel_url: window.location.href,
       })
