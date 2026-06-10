@@ -2,306 +2,546 @@ import type React from "react"
 import { useState, useRef } from "react"
 import { actions } from "astro:actions"
 import { toast } from "sonner"
-import { Loader2 } from "lucide-react"
+import { Loader2, Mail, MessageSquare, ArrowLeft } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { 
-  validateEmail, 
-  validatePassword, 
-  isNetworkError, 
-  isRetryableError,
-  getActionErrorMessage,
-  getActionErrorCode
+import {
+    validateEmail,
+    getActionErrorMessage,
+    getActionErrorCode,
+    isNetworkError,
+    isRetryableError,
 } from "@/utils/validation"
 
-const MAX_RETRIES = 3
-const RETRY_DELAYS = [1000, 2000, 4000] // Exponential backoff
+// ==========================================
+// Types
+// ==========================================
+
+type Step =
+    | 'email'          // Enter email
+    | 'choose_method'  // Pick magic link or WhatsApp OTP
+    | 'magic_sent'     // Magic link sent — waiting for user to click
+    | 'otp_sent'       // OTP sent — enter 6-digit code
+
+interface AvailableMethods {
+    magic_link: boolean
+    whatsapp_otp: boolean
+}
+
+const BRAND_BLUE = 'rgba(25,42,110,1)'
+
+// ==========================================
+// Step: Email input
+// ==========================================
+
+function EmailStep({
+    email,
+    setEmail,
+    isLoading,
+    onSubmit,
+}: {
+    email: string
+    setEmail: (v: string) => void
+    isLoading: boolean
+    onSubmit: () => void
+}) {
+    const [error, setError] = useState('')
+    const ref = useRef<HTMLInputElement>(null)
+
+    const handleSubmit = (e: React.FormEvent) => {
+        e.preventDefault()
+        const r = validateEmail(email)
+        if (!r.isValid) {
+            setError(r.error || 'Correo inválido')
+            ref.current?.focus()
+            return
+        }
+        setError('')
+        onSubmit()
+    }
+
+    return (
+        <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="space-y-2">
+                <Label style={{ color: BRAND_BLUE }} htmlFor="email">
+                    Correo Electrónico
+                </Label>
+                <Input
+                    ref={ref}
+                    id="email"
+                    type="email"
+                    placeholder="tu@email.com"
+                    value={email}
+                    onChange={(e) => {
+                        setEmail(e.target.value)
+                        setError('')
+                    }}
+                    disabled={isLoading}
+                    aria-invalid={!!error}
+                    className={error ? 'border-red-500 focus-visible:ring-red-500' : ''}
+                    required
+                />
+                {error && <p className="text-sm text-red-500" role="alert">{error}</p>}
+            </div>
+            <Button
+                type="submit"
+                className="w-full"
+                style={{ backgroundColor: BRAND_BLUE }}
+                disabled={isLoading}
+            >
+                {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                {isLoading ? 'Verificando...' : 'Continuar'}
+            </Button>
+        </form>
+    )
+}
+
+// ==========================================
+// Step: Choose method
+// ==========================================
+
+function ChooseMethodStep({
+    email,
+    methods,
+    isLoading,
+    onMagicLink,
+    onWhatsapp,
+    onBack,
+}: {
+    email: string
+    methods: AvailableMethods
+    isLoading: boolean
+    onMagicLink: () => void
+    onWhatsapp: () => void
+    onBack: () => void
+}) {
+    return (
+        <div className="space-y-4">
+            <p className="text-sm text-muted-foreground text-center">
+                ¿Cómo prefieres acceder con <span className="font-medium">{email}</span>?
+            </p>
+
+            {methods.magic_link && (
+                <Button
+                    onClick={onMagicLink}
+                    className="w-full flex items-center gap-2"
+                    style={{ backgroundColor: BRAND_BLUE }}
+                    disabled={isLoading}
+                >
+                    {isLoading ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                        <Mail className="h-4 w-4" />
+                    )}
+                    Recibir enlace por correo
+                </Button>
+            )}
+
+            {methods.whatsapp_otp && (
+                <Button
+                    onClick={onWhatsapp}
+                    variant="outline"
+                    className="w-full flex items-center gap-2"
+                    style={{ borderColor: BRAND_BLUE, color: BRAND_BLUE }}
+                    disabled={isLoading}
+                >
+                    {isLoading ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                        <MessageSquare className="h-4 w-4" />
+                    )}
+                    Código por WhatsApp
+                </Button>
+            )}
+
+            <button
+                type="button"
+                onClick={onBack}
+                disabled={isLoading}
+                className="w-full flex items-center justify-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors"
+            >
+                <ArrowLeft className="h-3 w-3" />
+                Cambiar correo
+            </button>
+        </div>
+    )
+}
+
+// ==========================================
+// Step: Magic link sent
+// ==========================================
+
+function MagicSentStep({
+    email,
+    isResending,
+    onResend,
+    onBack,
+}: {
+    email: string
+    isResending: boolean
+    onResend: () => void
+    onBack: () => void
+}) {
+    return (
+        <div className="space-y-4 text-center">
+            <div className="flex justify-center">
+                <div
+                    className="w-16 h-16 rounded-full flex items-center justify-center"
+                    style={{ backgroundColor: 'rgba(25,42,110,0.1)' }}
+                >
+                    <Mail className="h-8 w-8" style={{ color: BRAND_BLUE }} />
+                </div>
+            </div>
+            <div className="space-y-1">
+                <p className="font-medium" style={{ color: BRAND_BLUE }}>¡Revisa tu correo!</p>
+                <p className="text-sm text-muted-foreground">
+                    Enviamos un enlace de acceso a
+                </p>
+                <p className="text-sm font-medium">{email}</p>
+            </div>
+            <p className="text-xs text-muted-foreground">
+                El enlace expira en 15 minutos. Si no lo ves, revisa tu carpeta de spam.
+            </p>
+            <div className="space-y-2">
+                <Button
+                    onClick={onResend}
+                    variant="outline"
+                    className="w-full text-sm"
+                    disabled={isResending}
+                >
+                    {isResending ? (
+                        <><Loader2 className="mr-2 h-3 w-3 animate-spin" />Enviando...</>
+                    ) : (
+                        'Reenviar enlace'
+                    )}
+                </Button>
+                <button
+                    type="button"
+                    onClick={onBack}
+                    className="w-full flex items-center justify-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors"
+                >
+                    <ArrowLeft className="h-3 w-3" />
+                    Volver
+                </button>
+            </div>
+        </div>
+    )
+}
+
+// ==========================================
+// Step: OTP sent
+// ==========================================
+
+function OtpStep({
+    email,
+    maskedPhone,
+    isLoading,
+    onSubmit,
+    onResend,
+    onBack,
+}: {
+    email: string
+    maskedPhone: string
+    isLoading: boolean
+    onSubmit: (code: string) => void
+    onResend: () => void
+    onBack: () => void
+}) {
+    const [code, setCode] = useState('')
+    const [error, setError] = useState('')
+
+    const handleSubmit = (e: React.FormEvent) => {
+        e.preventDefault()
+        if (!code.trim() || code.length < 4) {
+            setError('Ingresa el código recibido.')
+            return
+        }
+        setError('')
+        onSubmit(code.trim())
+    }
+
+    return (
+        <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="text-center space-y-1">
+                <div className="flex justify-center">
+                    <div
+                        className="w-16 h-16 rounded-full flex items-center justify-center"
+                        style={{ backgroundColor: 'rgba(25,42,110,0.1)' }}
+                    >
+                        <MessageSquare className="h-8 w-8" style={{ color: BRAND_BLUE }} />
+                    </div>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                    Enviamos un código a tu WhatsApp <span className="font-medium">{maskedPhone}</span>
+                </p>
+            </div>
+
+            <div className="space-y-2">
+                <Label style={{ color: BRAND_BLUE }} htmlFor="otp-code">
+                    Código de verificación
+                </Label>
+                <Input
+                    id="otp-code"
+                    type="text"
+                    inputMode="numeric"
+                    placeholder="123456"
+                    maxLength={8}
+                    value={code}
+                    onChange={(e) => {
+                        setCode(e.target.value.replace(/\D/g, ''))
+                        setError('')
+                    }}
+                    disabled={isLoading}
+                    aria-invalid={!!error}
+                    className={`text-center text-xl tracking-widest ${error ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
+                    autoComplete="one-time-code"
+                    required
+                />
+                {error && <p className="text-sm text-red-500 text-center" role="alert">{error}</p>}
+            </div>
+
+            <Button
+                type="submit"
+                className="w-full"
+                style={{ backgroundColor: BRAND_BLUE }}
+                disabled={isLoading}
+            >
+                {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                {isLoading ? 'Verificando...' : 'Verificar código'}
+            </Button>
+
+            <div className="flex flex-col gap-2">
+                <button
+                    type="button"
+                    onClick={onResend}
+                    disabled={isLoading}
+                    className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                >
+                    Reenviar código
+                </button>
+                <button
+                    type="button"
+                    onClick={onBack}
+                    disabled={isLoading}
+                    className="flex items-center justify-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors"
+                >
+                    <ArrowLeft className="h-3 w-3" />
+                    Volver
+                </button>
+            </div>
+        </form>
+    )
+}
+
+// ==========================================
+// Main LoginForm
+// ==========================================
 
 export default function LoginForm() {
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
-  const [isLoading, setIsLoading] = useState(false)
-  const [errors, setErrors] = useState<Record<string, string>>({})
-  const [retryCount, setRetryCount] = useState(0)
-  
-  const emailInputRef = useRef<HTMLInputElement>(null)
-  const passwordInputRef = useRef<HTMLInputElement>(null)
-
-  const clearFieldError = (field: string) => {
-    setErrors(prev => {
-      const newErrors = { ...prev }
-      delete newErrors[field]
-      return newErrors
+    const [step, setStep] = useState<Step>('email')
+    const [email, setEmail] = useState('')
+    const [availableMethods, setAvailableMethods] = useState<AvailableMethods>({
+        magic_link: true,
+        whatsapp_otp: false,
     })
-  }
+    const [maskedPhone, setMaskedPhone] = useState('')
+    const [isLoading, setIsLoading] = useState(false)
+    const [isResending, setIsResending] = useState(false)
 
-  const validateField = (field: string, value: string): boolean => {
-    let result
-    switch (field) {
-      case 'email':
-        result = validateEmail(value)
-        break
-      case 'password':
-        result = validatePassword(value)
-        break
-      default:
-        return true
+    const redirectAfterLogin = () => {
+        toast.success('Inicio de sesión exitoso', { description: 'Redirigiendo...' })
+        setTimeout(() => { window.location.href = '/profile' }, 500)
     }
-    
-    if (!result.isValid && result.error) {
-      setErrors(prev => ({ ...prev, [field]: result.error! }))
-      return false
-    }
-    return true
-  }
 
-  const validateForm = (): { isValid: boolean; errors: Record<string, string> } => {
-    const emailResult = validateEmail(email)
-    const passwordResult = validatePassword(password)
-    
-    const newErrors: Record<string, string> = {}
-    
-    if (!emailResult.isValid && emailResult.error) {
-      newErrors.email = emailResult.error
-    }
-    if (!passwordResult.isValid && passwordResult.error) {
-      newErrors.password = passwordResult.error
-    }
-    
-    setErrors(newErrors)
-    return { isValid: Object.keys(newErrors).length === 0, errors: newErrors }
-  }
-
-  const performLogin = async (): Promise<boolean> => {
-    const normalizedEmail = email.trim()
-    const result = await actions.auth.loginCustomer({ email: normalizedEmail, password })
-    
-    if (result.error) {
-      throw result.error
-    }
-    
-    toast.success("Inicio de sesión exitoso", {
-      description: "Redirigiendo a tu perfil..."
-    })
-    
-    // Small delay for toast to be visible
-    setTimeout(() => {
-      window.location.href = "/profile"
-    }, 500)
-    
-    return true
-  }
-
-  const handleRetry = async (attempt: number, toastId?: string | number): Promise<boolean> => {
-    if (attempt > MAX_RETRIES) {
-      if (toastId) toast.dismiss(toastId)
-      return false
-    }
-    
-    // Update state for UI display
-    setRetryCount(attempt)
-    
-    const delayIndex = attempt - 1
-    const delay = RETRY_DELAYS[delayIndex] || RETRY_DELAYS[RETRY_DELAYS.length - 1]
-    
-    // Create or update the loading toast
-    const currentToastId = toastId ?? toast.loading(`Reintentando... (${attempt}/${MAX_RETRIES})`)
-    if (toastId) {
-      toast.loading(`Reintentando... (${attempt}/${MAX_RETRIES})`, { id: toastId })
-    }
-    
-    await new Promise(resolve => setTimeout(resolve, delay))
-    
-    try {
-      const result = await performLogin()
-      // Dismiss loading toast on success
-      toast.dismiss(currentToastId)
-      return result
-    } catch (error) {
-      const errorCode = getActionErrorCode(error)
-      if ((isRetryableError(errorCode) || isNetworkError(error)) && attempt < MAX_RETRIES) {
-        return handleRetry(attempt + 1, currentToastId)
-      }
-      // Dismiss loading toast before throwing error
-      toast.dismiss(currentToastId)
-      throw error
-    }
-  }
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    
-    // Client-side validation
-    const validation = validateForm()
-    if (!validation.isValid) {
-      const firstErrorField = Object.keys(validation.errors)[0]
-      if (firstErrorField === 'email') {
-        emailInputRef.current?.focus()
-      } else if (firstErrorField === 'password') {
-        passwordInputRef.current?.focus()
-      }
-      return
-    }
-    
-    setIsLoading(true)
-    setRetryCount(0)
-
-    try {
-      await performLogin()
-    } catch (error) {
-      const errorCode = getActionErrorCode(error)
-      const errorMessage = getActionErrorMessage(error)
-      
-      // Check if retryable
-      if (isRetryableError(errorCode) || isNetworkError(error)) {
+    // --- Email submission: fetch available methods ---
+    const handleEmailSubmit = async () => {
+        setIsLoading(true)
         try {
-          const success = await handleRetry(1)
-          if (success) return
-        } catch (retryError) {
-          toast.error("Error de conexión", {
-            description: "No pudimos conectar con el servidor. Por favor, verifica tu conexión e intenta nuevamente."
-          })
-          setIsLoading(false)
-          return
+            const result = await actions.auth.getLoginMethods({ email: email.trim() })
+            if (result.error) {
+                toast.error('Error al verificar el correo', {
+                    description: getActionErrorMessage(result.error),
+                })
+                return
+            }
+            const methods = result.data?.data?.methods ?? { magic_link: true, whatsapp_otp: false }
+            setAvailableMethods({
+                magic_link: methods.magic_link ?? true,
+                whatsapp_otp: methods.whatsapp_otp ?? false,
+            })
+            // If only magic_link is available, skip the choose step and send directly
+            if ((methods.magic_link || !methods.whatsapp_otp) && !methods.whatsapp_otp) {
+                await doSendMagicLink()
+                return
+            }
+            setStep('choose_method')
+        } catch (error) {
+            toast.error('Error de conexión', { description: 'Intenta nuevamente.' })
+        } finally {
+            setIsLoading(false)
         }
-      }
-      
-      // Handle specific error codes
-      // Covers both HTTP-style codes and CAUTH_* enums for consistency
-      switch (errorCode) {
-        case 'UNAUTHORIZED':
-        case 'CAUTH_002': // INVALID_CREDENTIALS
-        case 'CAUTH_005': // UNAUTHORIZED (enum)
-        case 'AUTH_003':  // Legacy: INVALID_CREDENTIALS
-          toast.error("Credenciales inválidas", {
-            description: "Por favor, verifica tu correo y contraseña."
-          })
-          emailInputRef.current?.focus()
-          break
-          
-        case 'CAUTH_004': // SESSION_EXPIRED
-        case 'AUTH_007':  // Legacy: SESSION_EXPIRED
-          toast.error("Sesión expirada", {
-            description: "Por favor, inicia sesión nuevamente."
-          })
-          break
-          
-        case 'CAUTH_003': // ACCOUNT_LOCKED
-        case 'AUTH_004':  // Legacy: ACCOUNT_LOCKED
-          toast.error("Cuenta bloqueada", {
-            description: "Tu cuenta ha sido bloqueada. Contacta a soporte: info@dominicanhciclub.com"
-          })
-          break
-          
-        case 'BAD_REQUEST':
-        case 'CAUTH_031': // VALIDATION_FAILED
-          toast.error("Datos inválidos", {
-            description: errorMessage
-          })
-          break
-          
-        default:
-          toast.error("Error al iniciar sesión", {
-            description: errorMessage
-          })
-      }
-      
-      console.error("Login error:", error)
-    } finally {
-      setIsLoading(false)
     }
-  }
 
-  const getButtonText = () => {
-    if (!isLoading) return "Iniciar sesión"
-    if (retryCount > 0) return `Reintentando (${retryCount}/${MAX_RETRIES})...`
-    return "Iniciando sesión..."
-  }
+    // --- Send magic link ---
+    const doSendMagicLink = async () => {
+        setIsLoading(true)
+        try {
+            const result = await actions.auth.sendMagicLink({ email: email.trim() })
+            if (result.error) {
+                const code = getActionErrorCode(result.error)
+                if (isRetryableError(code) || isNetworkError(result.error)) {
+                    toast.error('Error de conexión', { description: 'Intenta nuevamente.' })
+                } else {
+                    toast.error('No se pudo enviar el enlace', {
+                        description: getActionErrorMessage(result.error),
+                    })
+                }
+                return
+            }
+            setStep('magic_sent')
+        } catch (error) {
+            toast.error('Error inesperado', { description: 'Intenta nuevamente.' })
+        } finally {
+            setIsLoading(false)
+        }
+    }
 
-  return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
-        <div className="mb-8 text-center">
-          <a href="/">
-            <h1 className="text-2xl font-bold mb-2 text-[rgba(25,42,110,1)]">Dominican HCI Club </h1>
-          </a>
-          <p className="text-muted-foreground">Bienvenido/a de vuelta</p>
+    // --- Send WhatsApp OTP ---
+    const doSendWhatsappOtp = async () => {
+        setIsLoading(true)
+        try {
+            const result = await actions.auth.sendWhatsappOtp({ email: email.trim() })
+            if (result.error) {
+                toast.error('No se pudo enviar el código', {
+                    description: getActionErrorMessage(result.error),
+                })
+                return
+            }
+            setMaskedPhone(result.data?.data?.phone ?? '')
+            setStep('otp_sent')
+        } catch (error) {
+            toast.error('Error inesperado', { description: 'Intenta nuevamente.' })
+        } finally {
+            setIsLoading(false)
+        }
+    }
+
+    // --- Verify OTP code ---
+    const handleOtpVerify = async (code: string) => {
+        setIsLoading(true)
+        try {
+            const result = await actions.auth.verifyWhatsappOtp({ email: email.trim(), code })
+            if (result.error) {
+                const errorCode = getActionErrorCode(result.error)
+                switch (errorCode) {
+                    case 'UNAUTHORIZED':
+                        toast.error('Código incorrecto', { description: 'Verifica el código e intenta de nuevo.' })
+                        break
+                    default:
+                        toast.error('No se pudo verificar', { description: getActionErrorMessage(result.error) })
+                }
+                return
+            }
+            redirectAfterLogin()
+        } catch (error) {
+            toast.error('Error inesperado', { description: 'Intenta nuevamente.' })
+        } finally {
+            setIsLoading(false)
+        }
+    }
+
+    const stepTitles: Record<Step, { title: string; description: string }> = {
+        email: { title: 'Iniciar Sesión', description: 'Ingresa tu correo para continuar' },
+        choose_method: { title: 'Elige cómo acceder', description: 'Sin contraseña necesaria' },
+        magic_sent: { title: 'Enlace enviado', description: 'Accede sin contraseña' },
+        otp_sent: { title: 'Código enviado', description: 'Ingresa el código de WhatsApp' },
+    }
+
+    return (
+        <div className="min-h-screen bg-background flex items-center justify-center p-4">
+            <div className="w-full max-w-md">
+                <div className="mb-8 text-center">
+                    <a href="/">
+                        <h1 className="text-2xl font-bold mb-2" style={{ color: BRAND_BLUE }}>
+                            Dominican HCI Club
+                        </h1>
+                    </a>
+                    <p className="text-muted-foreground">Bienvenido/a de vuelta</p>
+                </div>
+
+                <Card>
+                    <CardHeader>
+                        <CardTitle style={{ color: BRAND_BLUE }}>{stepTitles[step].title}</CardTitle>
+                        <CardDescription>{stepTitles[step].description}</CardDescription>
+                    </CardHeader>
+
+                    <CardContent>
+                        {step === 'email' && (
+                            <EmailStep
+                                email={email}
+                                setEmail={setEmail}
+                                isLoading={isLoading}
+                                onSubmit={handleEmailSubmit}
+                            />
+                        )}
+
+                        {step === 'choose_method' && (
+                            <ChooseMethodStep
+                                email={email}
+                                methods={availableMethods}
+                                isLoading={isLoading}
+                                onMagicLink={doSendMagicLink}
+                                onWhatsapp={doSendWhatsappOtp}
+                                onBack={() => setStep('email')}
+                            />
+                        )}
+
+                        {step === 'magic_sent' && (
+                            <MagicSentStep
+                                email={email}
+                                isResending={isResending}
+                                onResend={async () => {
+                                    setIsResending(true)
+                                    const result = await actions.auth.sendMagicLink({ email: email.trim() })
+                                    setIsResending(false)
+                                    if (result.error) {
+                                        toast.error('No se pudo reenviar', { description: getActionErrorMessage(result.error) })
+                                    } else {
+                                        toast.success('Enlace reenviado')
+                                    }
+                                }}
+                                onBack={() => setStep('choose_method')}
+                            />
+                        )}
+
+                        {step === 'otp_sent' && (
+                            <OtpStep
+                                email={email}
+                                maskedPhone={maskedPhone}
+                                isLoading={isLoading}
+                                onSubmit={handleOtpVerify}
+                                onResend={doSendWhatsappOtp}
+                                onBack={() => setStep('choose_method')}
+                            />
+                        )}
+                    </CardContent>
+
+                    <CardFooter className="flex flex-col gap-2">
+                        <p className="text-sm text-muted-foreground text-center">
+                            ¿No tienes una cuenta?{' '}
+                            <a
+                                href="/register"
+                                className="hover:underline font-medium"
+                                style={{ color: BRAND_BLUE }}
+                            >
+                                Regístrate aquí
+                            </a>
+                        </p>
+                    </CardFooter>
+                </Card>
+            </div>
         </div>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-[rgba(25,42,110,1)]">Iniciar Sesión</CardTitle>
-            <CardDescription>Ingresa tus credenciales para acceder a tu cuenta</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="space-y-2">
-                <Label className="text-[rgba(25,42,110,1)]" htmlFor="email">Correo Electrónico</Label>
-                <Input
-                  ref={emailInputRef}
-                  id="email"
-                  type="email"
-                  placeholder="tu@email.com"
-                  value={email}
-                  onChange={(e) => {
-                    setEmail(e.target.value)
-                    clearFieldError('email')
-                  }}
-                  onBlur={() => validateField('email', email)}
-                  disabled={isLoading}
-                  aria-invalid={!!errors.email}
-                  className={errors.email ? 'border-red-500 focus-visible:ring-red-500' : ''}
-                  required
-                />
-                {errors.email && (
-                  <p className="text-sm text-red-500" role="alert">{errors.email}</p>
-                )}
-              </div>
-              <div className="space-y-2">
-                <Label className="text-[rgba(25,42,110,1)]" htmlFor="password">Contraseña</Label>
-                <Input
-                  ref={passwordInputRef}
-                  id="password"
-                  type="password"
-                  placeholder="••••••••"
-                  value={password}
-                  onChange={(e) => {
-                    setPassword(e.target.value)
-                    clearFieldError('password')
-                  }}
-                  onBlur={() => validateField('password', password)}
-                  disabled={isLoading}
-                  aria-invalid={!!errors.password}
-                  className={errors.password ? 'border-red-500 focus-visible:ring-red-500' : ''}
-                  required
-                />
-                {errors.password && (
-                  <p className="text-sm text-red-500" role="alert">{errors.password}</p>
-                )}
-              </div>
-              <Button type="submit" className="w-full bg-[rgba(25,42,110,1)]" disabled={isLoading}>
-                {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                {getButtonText()}
-              </Button>
-            </form>
-          </CardContent>
-          <CardFooter className="flex flex-col gap-2">
-            <p className="text-sm text-muted-foreground text-center">
-              ¿No tienes una cuenta?{" "}
-              <a href="/register" className="hover:underline text-[rgba(25,42,110,1)] font-medium">
-                Regístrate aquí
-              </a>
-            </p>
-          </CardFooter>
-        </Card>
-        
-        {/* Screen reader announcements */}
-        <div className="sr-only" aria-live="polite" aria-atomic="true">
-          {Object.values(errors).join('. ')}
-        </div>
-      </div>
-    </div>
-  )
+    )
 }

@@ -1,5 +1,5 @@
 import type React from "react"
-import { useState, useEffect, useRef } from "react"
+import { useState, useRef } from "react"
 import { actions } from "astro:actions"
 import { PUBLIC_FREE_PLAN_ID, PUBLIC_PREMIUM_PLAN_ID } from "astro:env/client"
 import { toast } from "sonner"
@@ -8,10 +8,8 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import {
   validateEmail,
-  validatePassword,
   validateName,
   validatePhone,
   isNetworkError,
@@ -22,8 +20,6 @@ import {
 
 const MAX_RETRIES = 3
 const RETRY_DELAYS = [1000, 2000, 4000] // Exponential backoff
-
-type PasswordStrength = 'weak' | 'medium' | 'strong' | null
 
 // Tipo para los países
 interface CountryCode {
@@ -61,27 +57,19 @@ const COUNTRY_CODES: CountryCode[] = [
 export default function RegisterForm() {
   const [name, setName] = useState("")
   const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
   const [selectedCountry, setSelectedCountry] = useState(COUNTRY_CODES[0]) // República Dominicana por defecto
   const [whatsapp, setWhatsapp] = useState("")
-  const [plan, setPlan] = useState("free")
+  const plan = "premium" // Plan único — sin selector
   const [isLoading, setIsLoading] = useState(false)
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [retryCount, setRetryCount] = useState(0)
-  const [passwordStrength, setPasswordStrength] = useState<PasswordStrength>(null)
 
   const nameInputRef = useRef<HTMLInputElement>(null)
   const emailInputRef = useRef<HTMLInputElement>(null)
-  const passwordInputRef = useRef<HTMLInputElement>(null)
   const whatsappInputRef = useRef<HTMLInputElement>(null)
 
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search)
-    const planParam = params.get("plan")
-    if (planParam?.toLowerCase() === "premium") {
-      setPlan("premium")
-    }
-  }, [])
+  // Plan único: siempre premium. Sin selector.
+  // (useEffect de plan-from-URL eliminado; ya no aplica con plan único)
 
   const clearFieldError = (field: string) => {
     setErrors(prev => {
@@ -100,12 +88,6 @@ export default function RegisterForm() {
       case 'email':
         result = validateEmail(value)
         break
-      case 'password':
-        result = validatePassword(value)
-        if (result.strength) {
-          setPasswordStrength(result.strength)
-        }
-        break
       case 'whatsapp':
         result = validatePhone(value)
         break
@@ -123,7 +105,6 @@ export default function RegisterForm() {
   const validateForm = (): { isValid: boolean; errors: Record<string, string> } => {
     const nameResult = validateName(name)
     const emailResult = validateEmail(email)
-    const passwordResult = validatePassword(password)
     const phoneResult = validatePhone(whatsapp)
 
     const newErrors: Record<string, string> = {}
@@ -133,9 +114,6 @@ export default function RegisterForm() {
     }
     if (!emailResult.isValid && emailResult.error) {
       newErrors.email = emailResult.error
-    }
-    if (!passwordResult.isValid && passwordResult.error) {
-      newErrors.password = passwordResult.error
     }
     if (!phoneResult.isValid && phoneResult.error) {
       newErrors.whatsapp = phoneResult.error
@@ -161,7 +139,6 @@ export default function RegisterForm() {
 
     const payload = {
       email: email.trim(),
-      password,
       name: name.trim(),
       phone: fullPhone,
       plan_id: planId
@@ -198,7 +175,7 @@ export default function RegisterForm() {
           })
         } else {
           toast.success("¡Cuenta creada y plan gratuito activado!", {
-            description: "Bienvenido/a al Dominican HCI Club. Redirigiendo..."
+            description: "Bienvenido(a) al Dominican HCI Club. Redirigiendo..."
           })
         }
 
@@ -318,8 +295,6 @@ export default function RegisterForm() {
       nameInputRef.current?.focus()
     } else if (errorFields.includes('email')) {
       emailInputRef.current?.focus()
-    } else if (errorFields.includes('password')) {
-      passwordInputRef.current?.focus()
     } else if (errorFields.includes('whatsapp')) {
       whatsappInputRef.current?.focus()
     }
@@ -420,43 +395,25 @@ export default function RegisterForm() {
   }
 
   const getButtonText = () => {
-    if (!isLoading) return "Crear cuenta"
+    if (!isLoading) return "Inscribirme hoy"
     if (retryCount > 0) return `Reintentando (${retryCount}/${MAX_RETRIES})...`
-    return "Creando cuenta..."
-  }
-
-  const getStrengthColor = (strength: PasswordStrength) => {
-    switch (strength) {
-      case 'weak': return 'bg-red-500'
-      case 'medium': return 'bg-yellow-500'
-      case 'strong': return 'bg-green-500'
-      default: return 'bg-gray-200'
-    }
-  }
-
-  const getStrengthText = (strength: PasswordStrength) => {
-    switch (strength) {
-      case 'weak': return 'Débil'
-      case 'medium': return 'Media'
-      case 'strong': return 'Fuerte'
-      default: return ''
-    }
+    return "Inscribiendo..."
   }
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <div className="w-full max-w-md">
-        <div className="mb-8 text-center">
+        <div className="mb-4 text-center">
           <a href="/">
-            <h1 className="text-2xl font-bold mb-2 text-[rgba(25,42,110,1)]">Dominican HCI CLub </h1>
+            <h1 className="text-2xl font-bold mb-2 text-[rgba(25,42,110,1)]">Dominican HCI Club</h1>
           </a>
-          <p className="text-muted-foreground">Crea tu cuenta y comienza a aprender</p>
+          <p className="text-muted-foreground">Crea tu cuenta y comienza tu crecimiento</p>
         </div>
 
         <Card>
           <CardHeader>
             <CardTitle className="text-[rgba(25,42,110,1)]">Registro</CardTitle>
-            <CardDescription>Completa el formulario para crear tu cuenta</CardDescription>
+            <CardDescription>Completa el formulario para inscribirte</CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
@@ -554,72 +511,12 @@ export default function RegisterForm() {
                   <p className="text-sm text-red-500" role="alert">{errors.whatsapp}</p>
                 )}
               </div>
-              <div className="space-y-2">
-                <Label className="text-[rgba(25,42,110,1)]" htmlFor="password">
-                  Contraseña
-                </Label>
-                <Input
-                  ref={passwordInputRef}
-                  id="password"
-                  type="password"
-                  placeholder="••••••••"
-                  value={password}
-                  onChange={(e) => {
-                    setPassword(e.target.value)
-                    clearFieldError('password')
-                    // Update strength indicator as user types
-                    const result = validatePassword(e.target.value)
-                    setPasswordStrength(result.strength || null)
-                  }}
-                  onBlur={() => validateField('password', password)}
-                  disabled={isLoading}
-                  aria-invalid={!!errors.password}
-                  className={errors.password ? 'border-red-500 focus-visible:ring-red-500' : ''}
-                  required
-                  minLength={8}
-                />
-                {/* Password strength indicator */}
-                {password && (
-                  <div className="space-y-1">
-                    <div className="flex gap-1">
-                      <div className={`h-1 flex-1 rounded ${passwordStrength ? getStrengthColor(passwordStrength) : 'bg-gray-200'}`} />
-                      <div className={`h-1 flex-1 rounded ${passwordStrength === 'medium' || passwordStrength === 'strong' ? getStrengthColor(passwordStrength) : 'bg-gray-200'}`} />
-                      <div className={`h-1 flex-1 rounded ${passwordStrength === 'strong' ? getStrengthColor(passwordStrength) : 'bg-gray-200'}`} />
-                    </div>
-                    {passwordStrength && (
-                      <p className={`text-xs ${
-                        passwordStrength === 'weak' ? 'text-red-500' :
-                        passwordStrength === 'medium' ? 'text-yellow-600' :
-                        'text-green-600'
-                      }`}>
-                        Fortaleza: {getStrengthText(passwordStrength)}
-                      </p>
-                    )}
-                  </div>
-                )}
-                {errors.password && (
-                  <p className="text-sm text-red-500" role="alert">{errors.password}</p>
-                )}
-              </div>
-
               <div className="space-y-3 pt-2">
-                <Label className="text-[rgba(25,42,110,1)]">Selecciona tu plan</Label>
-                <RadioGroup value={plan} onValueChange={setPlan} disabled={isLoading}>
-                  <div className="flex items-center space-x-2 border border-input rounded-lg p-4">
-                    <RadioGroupItem value="free" id="free" />
-                    <Label htmlFor="free" className="flex-1 cursor-pointer">
-                      <div className="font-semibold text-[#192a6e]">Gratuito</div>
-                      <div className="text-sm text-muted-foreground">$0/mes - Acceso básico</div>
-                    </Label>
-                  </div>
-                  <div className="flex items-center space-x-2 border border-input rounded-lg p-4">
-                    <RadioGroupItem value="premium" id="premium" />
-                    <Label htmlFor="premium" className="flex-1 cursor-pointer">
-                      <div className="font-semibold text-[#192a6e]">Premium</div>
-                      <div className="text-sm text-muted-foreground">$18/mes - Acceso completo</div>
-                    </Label>
-                  </div>
-                </RadioGroup>
+                <Label className="text-[rgba(25,42,110,1)]">Tu inversión</Label>
+                <div className="border border-input rounded-lg p-4 flex items-baseline justify-between gap-3">
+                  <div className="font-semibold text-[#192a6e]">DOP $1,250/mes</div>
+                  <div className="text-sm text-muted-foreground">Acceso completo</div>
+                </div>
               </div>
 
               <Button type="submit" className="w-full bg-[rgba(25,42,110,1)]" disabled={isLoading}>
@@ -630,9 +527,9 @@ export default function RegisterForm() {
           </CardContent>
           <CardFooter className="flex flex-col gap-2">
             <p className="text-sm text-muted-foreground text-center">
-              ¿Ya tienes una cuenta?{" "}
+              ¿Ya te inscribiste?{" "}
               <a href="/login" className="hover:underline font-medium text-[rgba(25,42,110,1)]">
-                Inicia sesión aquí
+                Accede aquí
               </a>
             </p>
           </CardFooter>

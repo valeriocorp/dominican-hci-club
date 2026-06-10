@@ -11,31 +11,29 @@ export const registerCustomer = defineAction({
     accept: "json",
     input: z.object({
         email: z.string().email('El correo electrónico no es válido'),
-        password: z.string().min(6, 'La contraseña debe tener al menos 6 caracteres'),
         name: z.string().min(1, 'El nombre es requerido'),
         phone: z.string().optional(),
         plan_id: z.string().optional(),
     }),
     handler: async (input, context) => {
-        const { email, password, name, phone, plan_id } = input;
+        const { email, name, phone, plan_id } = input;
         const { session, request } = context;
 
         // Obtener origin del request para validación del backend
-        const origin = request.headers.get('origin') 
+        const origin = request.headers.get('origin')
             || new URL(request.url).origin;
 
         try {
-            // Construir body solo con campos presentes
+            // Construir body solo con campos presentes (sin password — passwordless)
             const body: Record<string, string> = {
                 email,
-                password,
                 name,
             };
-            
+
             if (phone) {
                 body.phone = phone;
             }
-            
+
             if (plan_id) {
                 body.plan_id = plan_id;
             }
