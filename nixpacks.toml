@@ -1,0 +1,14 @@
+# Fuerza Bun para install/build/start (sin esto Nixpacks usa npm por defecto).
+# "..." conserva los paquetes Node auto-detectados: el comando start corre
+# `node ./dist/server/entry.mjs`, así que `node` debe estar presente en runtime.
+[phases.setup]
+nixPkgs = ["...", "bun"]
+
+[phases.install]
+cmds = ["bun install --frozen-lockfile"]
+
+[phases.build]
+cmds = ["bun run build"]
+
+[start]
+cmd = "bun run start"

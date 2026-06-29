@@ -1,7 +1,7 @@
 import type React from "react"
 import { useState, useRef } from "react"
 import { actions } from "astro:actions"
-import { PUBLIC_FREE_PLAN_ID, PUBLIC_PREMIUM_PLAN_ID } from "astro:env/client"
+import { PUBLIC_PREMIUM_PLAN_ID } from "astro:env/client"
 import { toast } from "sonner"
 import { Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -59,7 +59,6 @@ export default function RegisterForm() {
   const [email, setEmail] = useState("")
   const [selectedCountry, setSelectedCountry] = useState(COUNTRY_CODES[0]) // República Dominicana por defecto
   const [whatsapp, setWhatsapp] = useState("")
-  const plan = "premium" // Plan único — sin selector
   const [isLoading, setIsLoading] = useState(false)
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [retryCount, setRetryCount] = useState(0)
@@ -67,9 +66,6 @@ export default function RegisterForm() {
   const nameInputRef = useRef<HTMLInputElement>(null)
   const emailInputRef = useRef<HTMLInputElement>(null)
   const whatsappInputRef = useRef<HTMLInputElement>(null)
-
-  // Plan único: siempre premium. Sin selector.
-  // (useEffect de plan-from-URL eliminado; ya no aplica con plan único)
 
   const clearFieldError = (field: string) => {
     setErrors(prev => {
@@ -127,15 +123,8 @@ export default function RegisterForm() {
     // Formatear teléfono completo (código país + número)
     const fullPhone = whatsapp.trim() ? `${selectedCountry.code}${whatsapp}` : undefined
 
-    // IDs de planes del negocio - configurados via variables de entorno
-    // Dev: free=10, premium=9 | Prod: free=1, premium=2
-    const PLAN_IDS = {
-      free: PUBLIC_FREE_PLAN_ID,
-      premium: PUBLIC_PREMIUM_PLAN_ID
-    } as const
-
-    // Determinar plan_id basado en la selección del usuario
-    const planId = PLAN_IDS[plan as keyof typeof PLAN_IDS]
+    // Plan único: premium
+    const planId = PUBLIC_PREMIUM_PLAN_ID
 
     const payload = {
       email: email.trim(),
@@ -153,94 +142,40 @@ export default function RegisterForm() {
     const customerEmail = email.trim().toLowerCase()
     const customerName = name.trim()
 
-    // 2. Procesar según el plan seleccionado
-    if (plan === 'free') {
-      // Plan Gratuito: Completar suscripción gratuita
-      toast.loading("Activando tu plan gratuito...", { id: 'activating-plan' })
-      
-      try {
-        const freePlanResult = await actions.subscriptions.completeFreePlan({
-          customer_email: customerEmail,
-          customer_name: customerName,
-          customer_phone: fullPhone,
-        })
+    // 2. Plan premium: crear checkout de Stripe
+    toast.loading("Preparando el checkout...", { id: 'preparing-checkout' })
 
-        toast.dismiss('activating-plan')
+    try {
+      const checkoutResult = await actions.subscriptions.createSubscriptionCheckout({
+        plan_id: planId,
+        customer_email: customerEmail,
+        customer_name: customerName,
+        customer_phone: fullPhone,
+        currency: 'USD',
+        success_url: `${window.location.origin}/welcome`,
+        cancel_url: `${window.location.origin}/register`,
+      })
 
-        if (freePlanResult.error) {
-          console.error('Error activando plan gratuito:', freePlanResult.error)
-          // Continuamos aunque falle, el usuario ya está registrado
-          toast.warning("Tu cuenta fue creada, pero hubo un problema activando el plan gratuito.", {
-            description: "Contacta soporte si no puedes acceder a tu plan."
-          })
-        } else {
-          toast.success("¡Cuenta creada y plan gratuito activado!", {
-            description: "Bienvenido(a) al Dominican HCI Club. Redirigiendo..."
-          })
-        }
+      toast.dismiss('preparing-checkout')
 
-        setTimeout(() => {
-          window.location.href = "/confirmation"
-        }, 1000)
-
-      } catch (error) {
-        toast.dismiss('activating-plan')
-        console.error('Error en completeFreePlan:', error)
-        // Aún así redirigimos porque el usuario ya está registrado
-        toast.success("Cuenta creada exitosamente", {
-          description: "Redirigiendo..."
+      if (checkoutResult.error) {
+        console.error('Error creando checkout:', checkoutResult.error)
+        toast.error("Error al preparar el pago", {
+          description: "Tu cuenta fue creada. Puedes completar el pago desde tu perfil."
         })
         setTimeout(() => {
-          window.location.href = "/confirmation"
-        }, 1000)
-      }
-
-    } else {
-      // Plan Premium: Crear checkout de Stripe
-      toast.loading("Preparando el checkout...", { id: 'preparing-checkout' })
-
-      try {
-        const checkoutResult = await actions.subscriptions.createSubscriptionCheckout({
-          plan_id: planId,
-          customer_email: customerEmail,
-          customer_name: customerName,
-          customer_phone: fullPhone,
-          currency: 'USD',
-          success_url: `${window.location.origin}/welcome`,
-          cancel_url: `${window.location.origin}/register`,
+          window.location.href = "/profile"
+        }, 2000)
+      } else if (checkoutResult.data?.data?.checkout_url) {
+        const checkoutUrl = checkoutResult.data.data.checkout_url
+        toast.success("¡Cuenta creada! Redirigiendo al pago...", {
+          description: "Serás redirigido a Stripe para completar tu suscripción."
         })
-
-        toast.dismiss('preparing-checkout')
-
-        if (checkoutResult.error) {
-          console.error('Error creando checkout:', checkoutResult.error)
-          toast.error("Error al preparar el pago", {
-            description: "Tu cuenta fue creada. Puedes completar el pago desde tu perfil."
-          })
-          setTimeout(() => {
-            window.location.href = "/profile"
-          }, 2000)
-        } else if (checkoutResult.data?.data?.checkout_url) {
-          const checkoutUrl = checkoutResult.data.data.checkout_url
-          toast.success("¡Cuenta creada! Redirigiendo al pago...", {
-            description: "Serás redirigido a Stripe para completar tu suscripción."
-          })
-          // Redirigir al checkout de Stripe
-          setTimeout(() => {
-            window.location.href = checkoutUrl
-          }, 1500)
-        } else {
-          toast.warning("Tu cuenta fue creada", {
-            description: "Puedes completar el pago del plan premium desde tu perfil."
-          })
-          setTimeout(() => {
-            window.location.href = "/profile"
-          }, 2000)
-        }
-
-      } catch (error) {
-        toast.dismiss('preparing-checkout')
-        console.error('Error en createSubscriptionCheckout:', error)
+        // Redirigir al checkout de Stripe
+        setTimeout(() => {
+          window.location.href = checkoutUrl
+        }, 1500)
+      } else {
         toast.warning("Tu cuenta fue creada", {
           description: "Puedes completar el pago del plan premium desde tu perfil."
         })
@@ -248,6 +183,16 @@ export default function RegisterForm() {
           window.location.href = "/profile"
         }, 2000)
       }
+
+    } catch (error) {
+      toast.dismiss('preparing-checkout')
+      console.error('Error en createSubscriptionCheckout:', error)
+      toast.warning("Tu cuenta fue creada", {
+        description: "Puedes completar el pago del plan premium desde tu perfil."
+      })
+      setTimeout(() => {
+        window.location.href = "/profile"
+      }, 2000)
     }
 
     return true

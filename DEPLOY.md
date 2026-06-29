@@ -1,50 +1,55 @@
-# Guía de Despliegue - Dominican HCI Club
+# Guía de Despliegue — Dominican HCI Club
 
-## Configuración para Producción
+Web **premium-only** (Astro 5 SSR + adaptador Node standalone). Build con **Bun** vía Nixpacks en Dokploy.
 
-Este proyecto está configurado para desplegarse con Dokploy/Nixpacks usando Bun.
+## Builder (Nixpacks + Bun)
 
-### Archivos de Configuración
+`nixpacks.toml` fuerza Bun (Nixpacks usaría npm por defecto) y conserva `node`
+auto-detectado porque el `start` corre `node ./dist/server/entry.mjs`:
 
-- **`nixpacks.toml`**: Configuración específica para Nixpacks con Bun
-- **`package.json`**: Contiene el comando `start` necesario para ejecutar el servidor en producción
-- **`astro.config.mjs`**: Configurado con adaptador Node.js en modo standalone
+1. **Install:** `bun install --frozen-lockfile`
+2. **Build:** `bun run build`
+3. **Start:** `bun run start`
 
-### Variables de Entorno Requeridas
+> Si el servicio en Dokploy define Build/Start commands explícitos, esos ganan;
+> replicá los de arriba.
 
-Asegúrate de configurar estas variables en tu plataforma de despliegue:
+## Variables de entorno (Dokploy)
 
-```env
-HOST=0.0.0.0
-PORT=4321
-NODE_ENV=production
-```
+**Validación de env de Astro (importante):**
+- Las `PUBLIC_*` se inlinean en **build** → deben ir como **Build-time variables / build args**, no solo runtime.
+- Los secrets (`SERVER_URL`, `BUSINESS_API_KEY`, `SECRET_KEY`) se validan en runtime → runtime env.
 
-### Proceso de Despliegue
+| Variable | Valor prod | Cuándo |
+|---|---|---|
+| `SERVER_URL` | `https://api.llovio.com/` | runtime (secret) |
+| `BUSINESS_API_KEY` | live key del negocio 9 (rotada) — **solo en Dokploy** | runtime (secret) |
+| `SECRET_KEY` | secreto real (`openssl rand -hex 32`) | runtime (secret) |
+| `REDIS_URL` | `redis://<redis-clientes>:6379` (instancia compartida; prefijo `hci` en config) | runtime |
+| `PUBLIC_PREMIUM_PLAN_ID` | `2` | **build arg** + runtime |
+| `NODE_ENV` | `production` | build + runtime |
+| `HOST` / `PORT` | `0.0.0.0` / `4321` (o el que inyecte Dokploy) | runtime |
+| `GMAIL_USER` / `GMAIL_CLIENT_ID` / `GMAIL_CLIENT_SECRET` / `GMAIL_REFRESH_TOKEN` | credenciales del negocio | runtime |
 
-1. **Setup**: Instala Bun en el contenedor
-2. **Install**: `bun install --frozen-lockfile` - Instala las dependencias
-3. **Build**: `bun run build` - Compila el proyecto
-4. **Start**: `bun run start` - Inicia el servidor de producción
+Nunca commitear valores reales — solo placeholders en `.env.example`.
 
-### Puerto
+## Sesiones (Redis)
 
-La aplicación escucha en el puerto definido por la variable de entorno `PORT` (por defecto **4321**). El comando start acepta variables de entorno para configurar el host y puerto.
+Astro Sessions con driver **Redis** (`astro.config.mjs`), instancia **compartida entre
+clientes** con prefijo `base: 'hci'`. Requiere `REDIS_URL` + la dep `ioredis`. Sin
+`REDIS_URL`, ioredis cae a `localhost:6379` y las sesiones no persisten (todos los
+miembros logueados se desloguean en cada restart).
 
-### Verificación Local
+## Dominio
 
-Para probar el build de producción localmente:
+`dominicanhciclub.com` (DNS + cert en Dokploy/Traefik). Los emails de bienvenida
+hardcodean `https://dominicanhciclub.com/...` → el dominio de deploy debe coincidir.
+
+## Verificación local del build de prod
 
 ```bash
-# Instalar dependencias con Bun
 bun install
-
-# Construir el proyecto
 bun run build
-
-# Iniciar servidor de producción
-bun run start
+REDIS_URL=redis://localhost:6379 bun run start   # necesita un Redis local
+# App en http://localhost:4321
 ```
-
-La aplicación estará disponible en `http://localhost:4321` (o el puerto configurado)
-

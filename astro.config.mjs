@@ -53,28 +53,11 @@ export default defineConfig({
         access: "secret",
         context: "server",
       }),
-      // Clave pública para cliente
-      PUBLIC_SECRET_KEY: envField.string({
-        access: "public",
-        context: "client",
-      }),
       // API Key del negocio para autenticación de customers
       // Requerida por ApiKeyValidationMiddleware del backend larimar
       BUSINESS_API_KEY: envField.string({
         access: "secret",
         context: "server",
-      }),
-      // ID del payment link recurrente para el plan gratuito
-      // Dev: 85, Prod: 11
-      FREE_PLAN_PAYMENT_LINK_ID: envField.string({
-        access: "secret",
-        context: "server",
-      }),
-      // IDs de los planes de suscripción (públicos para uso en componentes React)
-      // Plan Gratis - Dev: 10, Prod: 1
-      PUBLIC_FREE_PLAN_ID: envField.string({
-        access: "public",
-        context: "client",
       }),
       // Plan Premium - Dev: 9, Prod: 2
       PUBLIC_PREMIUM_PLAN_ID: envField.string({
@@ -85,9 +68,15 @@ export default defineConfig({
   },
 
   session: {
-    // El adaptador Node usa filesystem local por defecto
-    // Duración de los datos en el storage filesystem (30 días en segundos)
-    ttl: 60 * 60 * 24 * 30, // 2592000 segundos = 30 días
+    // Redis compartido entre clientes; `base` aísla las llaves de HCI.
+    // process.env (no import.meta.env): el config se evalúa antes de la
+    // inyección de env de Vite, donde import.meta.env queda undefined.
+    driver: 'redis',
+    options: {
+      url: process.env.REDIS_URL,
+      base: 'hci',
+    },
+    ttl: 60 * 60 * 24 * 30, // 30 días
     cookie: {
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',

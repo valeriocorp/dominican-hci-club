@@ -7,7 +7,6 @@ export {};
 interface ImportMetaEnv {
   readonly SERVER_URL: string;
   readonly SECRET_KEY: string;
-  readonly PUBLIC_SECRET_KEY: string;
   readonly BUSINESS_API_KEY: string;
   readonly NODE_ENV: string;
 }
