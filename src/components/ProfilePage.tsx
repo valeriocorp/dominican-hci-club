@@ -7,8 +7,6 @@ import { toast } from 'sonner'
 import { actions } from 'astro:actions'
 import { PUBLIC_PREMIUM_PLAN_ID } from 'astro:env/client'
 
-type PlanType = 'free' | 'premium'
-
 interface ProfilePageProps {
   user: {
     id: string;
@@ -19,14 +17,15 @@ interface ProfilePageProps {
   };
   isLoggedIn: boolean;
   /**
-   * Plan actual del usuario. Valor por defecto: 'free'.
-   * TODO: Cuando el backend exponga información de suscripción (ej. en /auth/customer/login 
-   * o mediante un endpoint dedicado), pasar el plan real desde profile.astro.
+   * Indica si el usuario tiene una membresía premium activa y pagada.
+   * Premium-only: sin membresía activa NO hay acceso de miembro; se muestra
+   * el estado "pago pendiente". Los miembros activos son redirigidos por el
+   * middleware a /profile-premium, así que aquí normalmente llega false.
    */
-  currentPlan?: PlanType;
+  isMember?: boolean;
 }
 
-export default function ProfilePage({ user, isLoggedIn, currentPlan = 'free' }: ProfilePageProps) {
+export default function ProfilePage({ user, isMember = false }: ProfilePageProps) {
   const [isUpgrading, setIsUpgrading] = useState(false)
 
   const handleUpgradeToPremium = async () => {
@@ -101,7 +100,7 @@ export default function ProfilePage({ user, isLoggedIn, currentPlan = 'free' }: 
               </div>
             </CardHeader>
             <CardContent className="space-y-4">
-              {currentPlan === 'premium' ? (
+              {isMember ? (
                 <>
                   <div>
                     <p className="text-sm text-gray-500">Plan actual</p>
@@ -117,18 +116,9 @@ export default function ProfilePage({ user, isLoggedIn, currentPlan = 'free' }: 
                     <p className="text-sm text-gray-500">Método de pago</p>
                     <p className="font-medium">•••• •••• •••• 4242</p>
                   </div>
-                  <div className="flex flex-col sm:flex-row gap-2 pt-2">
-                    <Button variant="outline" className="flex-1">
+                  <div className="pt-2">
+                    <Button variant="outline" className="w-full">
                       Actualizar tarjeta
-                    </Button>
-                    <Button
-                      style={{ backgroundColor: '#192a6e' }}
-                      className="flex-1"
-                      asChild
-                    >
-                      <a href="/plan-changed">
-                        Cambiar a plan básico
-                      </a>
                     </Button>
                   </div>
                 </>
@@ -136,13 +126,16 @@ export default function ProfilePage({ user, isLoggedIn, currentPlan = 'free' }: 
                 <>
                   <div>
                     <p className="text-sm text-gray-500">Plan actual</p>
-                    <p className="font-semibold text-lg">Gratuito - $0/mes</p>
+                    <p className="font-semibold text-lg">Sin membresía activa</p>
                   </div>
-                  <p className="text-gray-600">
-                    ¡Maximiza tu potencial desbloqueando proyectos, mentorías y mucho más por solo $18 USD al mes! 👏
-                  </p>
-                  <Button 
-                    className="w-full" 
+                  <div className="rounded-lg border border-amber-200 bg-amber-50 p-4">
+                    <p className="font-medium text-gray-800">Tu membresía está pendiente de pago</p>
+                    <p className="text-sm text-gray-600 mt-1">
+                      Completa el pago de tu plan premium para acceder a todos los beneficios del club.
+                    </p>
+                  </div>
+                  <Button
+                    className="w-full"
                     style={{ backgroundColor: '#192a6e' }}
                     onClick={handleUpgradeToPremium}
                     disabled={isUpgrading}
@@ -153,7 +146,7 @@ export default function ProfilePage({ user, isLoggedIn, currentPlan = 'free' }: 
                         Procesando...
                       </>
                     ) : (
-                      'Acceder a mi potencial premium✨'
+                      'Completar mi membresía premium ✨'
                     )}
                   </Button>
                 </>
@@ -167,7 +160,7 @@ export default function ProfilePage({ user, isLoggedIn, currentPlan = 'free' }: 
               <CardTitle>Beneficios de tu plan</CardTitle>
             </CardHeader>
             <CardContent>
-              {currentPlan === 'premium' ? (
+              {isMember ? (
                 <ul className="space-y-3">
                   <li className="flex items-start gap-3">
                     <div className="w-1.5 h-1.5 rounded-full bg-primary mt-2" />
@@ -206,52 +199,30 @@ export default function ProfilePage({ user, isLoggedIn, currentPlan = 'free' }: 
                   </li>
                 </ul>
               ) : (
-                <div className="space-y-4">
-                  <ul className="space-y-3">
-                    <li className="flex items-start gap-3">
-                      <div className="w-1.5 h-1.5 rounded-full bg-primary mt-2" />
-                      <span>Acceso a recursos limitados</span>
+                <div className="bg-blue-50 rounded-lg p-4">
+                  <p className="font-semibold text-gray-800 mb-3">Con Premium vas a desbloquear:</p>
+                  <ul className="space-y-2">
+                    <li className="flex items-center gap-2">
+                      <span>✨</span>
+                      <span className="text-gray-700">Acceso a todos los recursos académicos</span>
                     </li>
-                    <li className="flex items-start gap-3">
-                      <div className="w-1.5 h-1.5 rounded-full bg-primary mt-2" />
-                      <span>Asistencia a eventos limitados</span>
+                    <li className="flex items-center gap-2">
+                      <span>✨</span>
+                      <span className="text-gray-700">Seminarios ilimitados + grabaciones</span>
                     </li>
-                    <li className="flex items-start gap-3">
-                      <div className="w-1.5 h-1.5 rounded-full bg-primary mt-2" />
-                      <span>Comunidad limitada</span>
+                    <li className="flex items-center gap-2">
+                      <span>✨</span>
+                      <span className="text-gray-700">Networking con profesionales</span>
                     </li>
-                    <li className="flex items-start gap-3">
-                      <div className="w-1.5 h-1.5 rounded-full bg-primary mt-2" />
-                      <span>Soporte</span>
+                    <li className="flex items-center gap-2">
+                      <span>✨</span>
+                      <span className="text-gray-700">Mentoría 1:1</span>
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <span>✨</span>
+                      <span className="text-gray-700">Soporte prioritario</span>
                     </li>
                   </ul>
-                  
-                  {/* Premium Upsell */}
-                  <div className="bg-blue-50 rounded-lg p-4 mt-4">
-                    <p className="font-semibold text-gray-800 mb-3">Desbloquea más con Premium:</p>
-                    <ul className="space-y-2">
-                      <li className="flex items-center gap-2">
-                        <span>✨</span>
-                        <span className="text-gray-700">Acceso a todos los recursos académicos</span>
-                      </li>
-                      <li className="flex items-center gap-2">
-                        <span>✨</span>
-                        <span className="text-gray-700">Seminarios ilimitados + grabaciones</span>
-                      </li>
-                      <li className="flex items-center gap-2">
-                        <span>✨</span>
-                        <span className="text-gray-700">Networking con profesionales</span>
-                      </li>
-                      <li className="flex items-center gap-2">
-                        <span>✨</span>
-                        <span className="text-gray-700">Mentoría 1:1</span>
-                      </li>
-                      <li className="flex items-center gap-2">
-                        <span>✨</span>
-                        <span className="text-gray-700">Soporte prioritario</span>
-                      </li>
-                    </ul>
-                  </div>
                 </div>
               )}
             </CardContent>

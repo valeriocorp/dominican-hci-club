@@ -67,6 +67,27 @@ export async function getSessionSubscription(
 }
 
 /**
+ * Determina si una suscripción representa una membresía premium activa y pagada.
+ *
+ * Fuente única de verdad para el control de acceso: el backend (larimar) solo
+ * devuelve suscripciones con `status: 'active'` en login/me, por lo que una
+ * suscripción ausente (null) significa "sin membresía". El plan gratuito quedó
+ * despublicado, así que solo `plan_type: 'premium'` habilita acceso de miembro.
+ *
+ * @param subscription - Suscripción de la sesión (o null)
+ * @returns true solo si hay una membresía premium activa
+ */
+export function hasActiveMembership(
+  subscription?: CustomerSubscription | null
+): boolean {
+  return (
+    !!subscription &&
+    subscription.plan_type === 'premium' &&
+    subscription.status === 'active'
+  );
+}
+
+/**
  * Obtiene el ID del negocio actualmente seleccionado
  * @param session - Instancia de la sesión de Astro
  * @returns ID del negocio actual o null si no está seleccionado

@@ -1,6 +1,7 @@
 ---
 import Layout from '@/layouts/Layout.astro'
 import ProfilePremiumPage from '@/components/ProfilePremiumPage'
+import { hasActiveMembership } from '@/utils/sessionHelpers'
 
 // Obtener datos del usuario desde la sesión
 const { isLoggedIn } = Astro.locals;
@@ -10,6 +11,12 @@ const subscription = await Astro.session?.get('subscription');
 // Si no hay usuario, redirigir a login
 if (!isLoggedIn || !user) {
   return Astro.redirect('/login');
+}
+
+// Defensa en profundidad: este es el dashboard real de miembro. Sin membresía
+// premium activa NO se muestra, aunque el middleware no lo hubiera gateado.
+if (!hasActiveMembership(subscription)) {
+  return Astro.redirect('/profile');
 }
 ---
 
