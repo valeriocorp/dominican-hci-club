@@ -1,11 +1,11 @@
 /**
  * Template de correo de cancelación de membresía Premium
  * 
- * Se envía cuando un usuario cancela su plan premium y pasa al plan básico.
+ * Se envía cuando un usuario cancela su membresía premium.
  * Incluye:
  * - Confirmación de la cancelación
  * - Fecha hasta la cual mantiene beneficios premium
- * - Lista de beneficios del plan básico
+ * - Aviso de fin de membresía al terminar el ciclo
  * - Invitación a regresar
  * 
  * @param customerName - Nombre del cliente
@@ -83,45 +83,17 @@ export function getCancellationMembershipEmail(
                                 Hemos procesado la solicitud de cancelación de tu plan Premium. Sentimos mucho que decidas tomar un camino diferente y queremos que sepas que siempre tendrás un lugar en la comunidad del Dominican HCI Club.
                             </p>
                             
-                            <!-- Caja de información de actualización -->
+                            <!-- Caja de información de fin de membresía -->
                             <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; margin-bottom: 32px;">
                                 <tr>
                                     <td style="padding: 24px;">
                                         <p style="margin: 0 0 16px 0; font-size: 18px; font-weight: 600; color: #192A6E; text-align: center;">
-                                            Tu membresía ha sido actualizada al <span style="text-decoration: underline;">Plan Básico.</span>
+                                            Tu membresía finalizará el <span style="text-decoration: underline;">${formattedDate}</span>.
                                         </p>
-                                        
-                                        <p style="margin: 0 0 16px 0; font-size: 14px; line-height: 1.6; color: #4b5563;">
-                                            Mantendrás el acceso a los beneficios Premium hasta el final de tu ciclo de facturación actual (<strong style="color: #192A6E;">${formattedDate}</strong>). A partir de esa fecha, tu cuenta pasará automáticamente al plan gratuito con los siguientes beneficios:
+
+                                        <p style="margin: 0; font-size: 14px; line-height: 1.6; color: #4b5563;">
+                                            Mantendrás el acceso completo a todos los beneficios Premium hasta el final de tu ciclo de facturación actual (<strong style="color: #192A6E;">${formattedDate}</strong>). A partir de esa fecha, tu membresía quedará cerrada y no se generarán nuevos cobros. Podrás reactivarla cuando quieras para recuperar el acceso al club.
                                         </p>
-                                        
-                                        <!-- Lista de beneficios del plan básico -->
-                                        <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
-                                            <tr>
-                                                <td style="padding: 8px 0; font-size: 14px; line-height: 1.6; color: #374151;">
-                                                    <strong style="color: #192A6E; display: block;">Acceso a recursos limitados:</strong>
-                                                    tendrás acceso a una selección curada de contenidos fundamentales para iniciarte en el mundo de la investigación y diseño de experiencia de usuario.
-                                                </td>
-                                            </tr>
-                                            <tr>
-                                                <td style="padding: 8px 0; font-size: 14px; line-height: 1.6; color: #374151;">
-                                                    <strong style="color: #192A6E; display: block;">Asistencia a eventos limitados:</strong>
-                                                    podrás asistir a eventos en línea y/o presenciales designados.
-                                                </td>
-                                            </tr>
-                                            <tr>
-                                                <td style="padding: 8px 0; font-size: 14px; line-height: 1.6; color: #374151;">
-                                                    <strong style="color: #192A6E; display: block;">Comunidad limitada:</strong>
-                                                    participarás en nuestro canal general para recibir los beneficios anteriores y mantenerte al tanto de las novedades del club.
-                                                </td>
-                                            </tr>
-                                            <tr>
-                                                <td style="padding: 8px 0; font-size: 14px; line-height: 1.6; color: #374151;">
-                                                    <strong style="color: #192A6E; display: block;">Soporte:</strong>
-                                                    cuentas con acceso a soporte general por correo electrónico y WhatsApp para consultas básicas sobre la membresía y actividades.
-                                                </td>
-                                            </tr>
-                                        </table>
                                     </td>
                                 </tr>
                             </table>
