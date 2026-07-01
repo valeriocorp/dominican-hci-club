@@ -1,6 +1,7 @@
 ---
 import Layout from '@/layouts/Layout.astro'
 import ProfilePage from '@/components/ProfilePage'
+import { hasActiveMembership } from '@/utils/sessionHelpers'
 
 // Obtener datos del usuario desde locals (poblados por middleware)
 const { isLoggedIn } = Astro.locals;
@@ -15,18 +16,20 @@ if (!isLoggedIn || !user) {
   return Astro.redirect('/login');
 }
 
-// Determinar el plan actual desde la suscripción
-const currentPlan = subscription?.plan_type || 'free';
+// Premium-only: la ausencia de suscripción premium activa NO es acceso "free".
+// Un miembro activo es redirigido por el middleware a /profile-premium; aquí
+// solo llegan usuarios sin membresía, que ven el estado de pago pendiente.
+const isMember = hasActiveMembership(subscription);
 ---
 
 <Layout
   title="Mi Perfil - Dominican HCI Club"
   description="Gestiona tu cuenta y suscripción del Dominican HCI Club"
 >
-  <ProfilePage 
-    client:load 
+  <ProfilePage
+    client:load
     user={user}
     isLoggedIn={isLoggedIn}
-    currentPlan={currentPlan}
+    isMember={isMember}
   />
 </Layout>

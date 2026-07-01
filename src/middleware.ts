@@ -13,6 +13,7 @@ import {
     getSessionToken,
     getCurrentBusinessId,
     getSessionSubscription,
+    hasActiveMembership,
 } from "@/utils/sessionHelpers";
 import { server } from "@/actions";
 
@@ -30,8 +31,6 @@ const privateRoutes = [
     '/profile-premium',
     '/welcome',
     '/premium-welcome',
-    '/plan-changed',
-    '/confirmation',
 ];
 
 //? Rutas que solo deben ser accedidas por usuarios NO autenticados
@@ -191,31 +190,32 @@ export const onRequest = defineMiddleware(
         }
 
         //? ===================================
-        //? REDIRECCIÓN: SEGÚN TIPO DE PLAN
+        //? REDIRECCIÓN: SEGÚN MEMBRESÍA
         //? ===================================
 
-        //? Si el usuario está logueado, redirigir según su tipo de plan
-        if (locals.isLoggedIn && locals.subscription) {
-            const planType = locals.subscription.plan_type;
-            
-            //? Plan GRATIS: Redirigir de /welcome a /confirmation
-            if (planType === 'free' && pathname === '/welcome') {
-                return redirect('/confirmation');
-            }
-            
-            //? Plan PREMIUM: Redirigir de /confirmation a /welcome
-            if (planType === 'premium' && pathname === '/confirmation') {
-                return redirect('/welcome');
-            }
+        //? Premium-only: el acceso de miembro exige una suscripción premium
+        //? activa y pagada. La ausencia de suscripción NO es "plan free" con
+        //? acceso: es "sin membresía". Se evalúa con isLoggedIn (no con
+        //? `locals.subscription` truthy) para que un usuario sin sub también
+        //? quede gateado en las rutas de miembro.
+        if (locals.isLoggedIn) {
+            const isMember = hasActiveMembership(locals.subscription);
 
-            //? Plan GRATIS: Redirigir de /profile-premium a /profile
-            if (planType === 'free' && pathname === '/profile-premium') {
-                return redirect('/profile');
-            }
-            
-            //? Plan PREMIUM: Redirigir de /profile a /profile-premium
-            if (planType === 'premium' && pathname === '/profile') {
-                return redirect('/profile-premium');
+            if (isMember) {
+                //? Miembro activo: ruteo canónico premium
+                if (pathname === '/profile') {
+                    return redirect('/profile-premium');
+                }
+            } else {
+                //? Sin membresía premium activa: el dashboard de miembro queda
+                //? cerrado. Se envía a /profile, que muestra el estado
+                //? "completá tu membresía / pago pendiente".
+                //? (/welcome y /premium-welcome se gatean por contenido en la
+                //? propia página tras refrescar la suscripción, no acá, para no
+                //? romper el refresh post-pago.)
+                if (pathname.startsWith('/profile-premium')) {
+                    return redirect('/profile');
+                }
             }
         }
 

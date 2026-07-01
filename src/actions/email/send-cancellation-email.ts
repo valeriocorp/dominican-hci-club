@@ -7,7 +7,7 @@ import { getCancellationMembershipEmail } from '@/lib/email-templates';
  * 📧 SEND CANCELLATION EMAIL ACTION
  * 
  * Envía un correo de confirmación de cancelación de membresía premium.
- * Se usa cuando un usuario cancela su suscripción premium y pasa al plan básico.
+ * Se usa cuando un usuario cancela su membresía premium.
  * 
  * Este action puede ser llamado:
  * 1. Directamente desde el frontend (si detecta la cancelación)
