@@ -1,9 +1,10 @@
 ---
 import Layout from '@/layouts/Layout.astro'
-import { Button } from '@/components/ui/button'
+import { buttonVariants } from '@/components/ui/button'
+import { cn } from '@/lib/utils'
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import ButtonWelcomeCard from '@/components/ButtonWelcomeCard'
-import { getSessionUser, getSessionSubscription } from '@/utils/sessionHelpers'
+import { getSessionUser, getSessionSubscription, hasActiveMembership } from '@/utils/sessionHelpers'
 import { sendWelcomePremiumEmailInternal } from '@/actions/email'
 import { server } from '@/actions'
 import { PUBLIC_PREMIUM_PLAN_ID } from 'astro:env/client'
@@ -29,6 +30,12 @@ const welcomeEmailSent = Astro.cookies.get('welcome_email_sent')?.value === 'tru
 
 // Determinar si es plan premium (usando variable de entorno o amount > 0)
 const isPremium = subscription?.plan_id === PUBLIC_PREMIUM_PLAN_ID || (subscription?.amount && Number(subscription.amount) > 0);
+
+// Premium-only: solo un miembro con suscripción activa ve el contenido de
+// bienvenida. Sin membresía activa se muestra un estado neutro de
+// "confirmando pago" — cierra la filtración de contenido de miembro sin
+// rebotar a un pagador durante el race pago→webhook.
+const isMember = hasActiveMembership(subscription);
 
 // Enviar correo de bienvenida SOLO si:
 // 1. Tenemos datos del usuario
@@ -57,6 +64,7 @@ if (user?.email && user?.name && isPremium && !welcomeEmailSent) {
 >
   <div class="min-h-screen bg-background flex items-start justify-center p-4 pt-4">
     <div class="w-full max-w-3xl">
+      {isMember ? (
       <Card client:load>
         <CardHeader client:load className="pt-4 pb-0">
           <CardTitle client:load className="text-3xl md:text-4xl font-bold text-[#192a6e] text-left">
@@ -90,6 +98,25 @@ if (user?.email && user?.name && isPremium && !welcomeEmailSent) {
           <ButtonWelcomeCard />
         </CardFooter>
       </Card>
+      ) : (
+      <Card>
+        <CardHeader className="pt-4 pb-0">
+          <CardTitle className="text-2xl md:text-3xl font-bold text-[#192a6e] text-left">
+            Estamos confirmando tu pago
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4 text-lg leading-relaxed pt-4">
+          <p class="text-foreground">
+            En cuanto se confirme tu membresía premium tendrás acceso completo al club.
+            Esto puede tardar unos segundos.
+          </p>
+        </CardContent>
+        <CardFooter className="flex flex-col sm:flex-row justify-center gap-3 pt-4">
+          <a href="/welcome" class={cn(buttonVariants(), 'bg-[#192a6e]')}>Actualizar</a>
+          <a href="/profile" class={cn(buttonVariants({ variant: 'outline' }))}>Ir a mi perfil</a>
+        </CardFooter>
+      </Card>
+      )}
     </div>
   </div>
 </Layout>

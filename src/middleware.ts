@@ -210,8 +210,9 @@ export const onRequest = defineMiddleware(
                 //? Sin membresía premium activa: el dashboard de miembro queda
                 //? cerrado. Se envía a /profile, que muestra el estado
                 //? "completá tu membresía / pago pendiente".
-                //? (/welcome y /premium-welcome NO se gatean aquí: refrescan la
-                //? suscripción tras el pago y bloquearlas rompería ese refresh.)
+                //? (/welcome y /premium-welcome se gatean por contenido en la
+                //? propia página tras refrescar la suscripción, no acá, para no
+                //? romper el refresh post-pago.)
                 if (pathname.startsWith('/profile-premium')) {
                     return redirect('/profile');
                 }

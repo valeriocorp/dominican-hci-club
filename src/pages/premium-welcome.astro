@@ -1,11 +1,58 @@
 ---
 import Layout from '@/layouts/Layout.astro'
 import PremiumWelcomePage from '@/components/PremiumWelcomePage'
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
+import { buttonVariants } from '@/components/ui/button'
+import { cn } from '@/lib/utils'
+import { getSessionUser, getSessionSubscription, hasActiveMembership } from '@/utils/sessionHelpers'
+import { server } from '@/actions'
+
+// Justo después del pago la sesión puede no tener la suscripción todavía (el
+// webhook de Stripe llega async). Intentamos refrescar antes de gatear.
+let user = await getSessionUser(Astro.session);
+let subscription = await getSessionSubscription(Astro.session);
+
+if (user && !subscription) {
+  try {
+    const refreshResult = await Astro.callAction(server.auth.refreshUserData, {});
+    if (refreshResult.data?.success && refreshResult.data?.data?.subscription) {
+      subscription = refreshResult.data.data.subscription;
+    }
+  } catch (error) {
+    // Silencioso: si no se puede refrescar, se muestra el estado de confirmación.
+  }
+}
+
+// Premium-only: sin membresía premium activa NO se muestra el contenido de
+// bienvenida premium. Se muestra un estado neutro de "confirmando pago".
+const isMember = hasActiveMembership(subscription);
 ---
 
 <Layout
   title="¡Bienvenido a Premium! - Dominican HCI Club"
   description="¡Felicidades! Has desbloqueado todos los beneficios premium del Dominican HCI Club"
 >
-  <PremiumWelcomePage client:load />
+  {isMember ? (
+    <PremiumWelcomePage client:load />
+  ) : (
+    <div class="min-h-screen bg-background flex items-center justify-center p-4">
+      <div class="w-full max-w-md">
+        <Card>
+          <CardHeader className="text-center">
+            <CardTitle className="text-2xl text-[#192a6e]">Estamos confirmando tu pago</CardTitle>
+          </CardHeader>
+          <CardContent className="text-center space-y-4">
+            <p class="text-muted-foreground">
+              En cuanto se confirme tu membresía premium tendrás acceso completo al club.
+              Esto puede tardar unos segundos.
+            </p>
+          </CardContent>
+          <CardFooter className="flex flex-col sm:flex-row justify-center gap-3">
+            <a href="/premium-welcome" class={cn(buttonVariants(), 'bg-[#192a6e]')}>Actualizar</a>
+            <a href="/profile" class={cn(buttonVariants({ variant: 'outline' }))}>Ir a mi perfil</a>
+          </CardFooter>
+        </Card>
+      </div>
+    </div>
+  )}
 </Layout>
