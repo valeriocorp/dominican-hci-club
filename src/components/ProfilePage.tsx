@@ -263,14 +263,16 @@ export default function ProfilePage({ user, isMember = false }: ProfilePageProps
             </CardContent>
           </Card>
 
-          {/* Navigation Buttons */}
-          <div className="pt-4">
-            <Button className="w-full" style={{ backgroundColor: '#192a6e' }} asChild>
-              <a href="https://chat.whatsapp.com/H9efJ2wyGACEdurOVLbOpD" target="_blank" rel="noopener noreferrer">
-                Continua aprendiendo
-              </a>
-            </Button>
-          </div>
+          {/* Navigation Buttons — el acceso a la comunidad es solo para miembros */}
+          {isMember && (
+            <div className="pt-4">
+              <Button className="w-full" style={{ backgroundColor: '#192a6e' }} asChild>
+                <a href="https://chat.whatsapp.com/H9efJ2wyGACEdurOVLbOpD" target="_blank" rel="noopener noreferrer">
+                  Continua aprendiendo
+                </a>
+              </Button>
+            </div>
+          )}
         </div>
       </main>
     </div>

@@ -31,7 +31,6 @@ const privateRoutes = [
     '/profile-premium',
     '/welcome',
     '/premium-welcome',
-    '/confirmation',
 ];
 
 //? Rutas que solo deben ser accedidas por usuarios NO autenticados
@@ -204,9 +203,6 @@ export const onRequest = defineMiddleware(
 
             if (isMember) {
                 //? Miembro activo: ruteo canónico premium
-                if (pathname === '/confirmation') {
-                    return redirect('/welcome');
-                }
                 if (pathname === '/profile') {
                     return redirect('/profile-premium');
                 }
