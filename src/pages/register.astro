@@ -1,11 +1,15 @@
 ---
 import Layout from '@/layouts/Layout.astro'
 import RegisterForm from '@/components/RegisterForm'
+import { getPremiumRegisterPlan } from '@/lib/registerPlan'
+import { PUBLIC_PREMIUM_PLAN_ID } from 'astro:env/client'
+
+const premiumPlan = await getPremiumRegisterPlan(PUBLIC_PREMIUM_PLAN_ID)
 ---
 
 <Layout
   title="Registro - Dominican HCI Club"
   description="Crea tu cuenta en el Dominican HCI Club y comienza a aprender"
 >
-  <RegisterForm client:load />
+  <RegisterForm client:load premiumPlan={premiumPlan} />
 </Layout>
