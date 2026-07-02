@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { type RegisterPlanSummary, toRegisterPlanSummary } from "@/lib/registerPlanDisplay"
 import {
   validateEmail,
   validateName,
@@ -27,6 +28,10 @@ interface CountryCode {
   flag: string
   name: string
   iso: string
+}
+
+interface RegisterFormProps {
+  premiumPlan?: RegisterPlanSummary
 }
 
 // Lista de países con códigos telefónicos y banderas
@@ -54,7 +59,7 @@ const COUNTRY_CODES: CountryCode[] = [
   { code: "+598", flag: "🇺🇾", name: "Uruguay", iso: "UY" },
 ]
 
-export default function RegisterForm() {
+export default function RegisterForm({ premiumPlan = toRegisterPlanSummary(null) }: RegisterFormProps) {
   const [name, setName] = useState("")
   const [email, setEmail] = useState("")
   const [selectedCountry, setSelectedCountry] = useState(COUNTRY_CODES[0]) // República Dominicana por defecto
@@ -459,7 +464,7 @@ export default function RegisterForm() {
               <div className="space-y-3 pt-2">
                 <Label className="text-[rgba(25,42,110,1)]">Tu inversión</Label>
                 <div className="border border-input rounded-lg p-4 flex items-baseline justify-between gap-3">
-                  <div className="font-semibold text-[#192a6e]">DOP $1,250/mes</div>
+                  <div className="font-semibold text-[#192a6e]">{premiumPlan.priceLabel ?? premiumPlan.name}</div>
                   <div className="text-sm text-muted-foreground">Acceso completo</div>
                 </div>
               </div>
