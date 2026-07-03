@@ -17,8 +17,8 @@ export default function MembershipSection() {
             <CardHeader>
               <CardTitle className="text-2xl text-[rgba(25,42,110,1)]">Plan premium</CardTitle>
               <CardDescription className="text-lg">
-                <span className="text-4xl font-bold text-[rgba(25,42,110,1)]">$18</span>
-                <span className="text-[rgba(25,42,110,1)]">/mes USD</span>
+                <span className="text-4xl font-bold text-[rgba(25,42,110,1)]">DOP$ 1,000</span>
+                <span className="text-[rgba(25,42,110,1)]"> al mes</span>
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">

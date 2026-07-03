@@ -65,5 +65,5 @@ function formatMonthlyPrice(currency: "DOP" | "USD", amount: number): string {
     maximumFractionDigits: 2,
   }).format(amount)
 
-  return `${currency} $${formattedAmount}/mes`
+  return `${currency}$ ${formattedAmount} al mes`
 }

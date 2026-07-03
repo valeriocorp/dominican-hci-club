@@ -34,6 +34,7 @@ export default function ProfilePage({ user, isMember = false }: ProfilePageProps
       const result = await actions.subscriptions.createSubscriptionCheckout({
         customer_email: user.email,
         plan_id: PUBLIC_PREMIUM_PLAN_ID,
+        currency: 'DOP',
         success_url: `${window.location.origin}/premium-welcome`,
         cancel_url: window.location.href,
       })
@@ -105,7 +106,7 @@ export default function ProfilePage({ user, isMember = false }: ProfilePageProps
                   <div>
                     <p className="text-sm text-gray-500">Plan actual</p>
                     <p className="font-semibold text-lg" style={{ color: 'rgba(25,42,110,1)' }}>
-                      Premium - $18/mes
+                      Premium - DOP$ 1,000 al mes
                     </p>
                   </div>
                   <div>

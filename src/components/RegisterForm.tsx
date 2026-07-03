@@ -156,7 +156,7 @@ export default function RegisterForm({ premiumPlan = toRegisterPlanSummary(null)
         customer_email: customerEmail,
         customer_name: customerName,
         customer_phone: fullPhone,
-        currency: 'USD',
+        currency: 'DOP',
         success_url: `${window.location.origin}/welcome`,
         cancel_url: `${window.location.origin}/register`,
       })
